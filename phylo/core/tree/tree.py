@@ -1,0 +1,999 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+A class for phylogenetic trees.
+
+"""
+
+__docformat__ = 'restructuredtext en'
+
+
+### IMPORTS ###
+
+from exceptions import NotImplementedError
+from copy import deepcopy
+
+from relais.dev.common import *
+
+from phylo.core.impl.odict import Odict
+from node import Node
+from branch import Branch
+
+__all__ = [
+	'Ptree',
+]
+
+
+### IMPLEMENTATION ###
+
+class Ptree (object):
+	"""
+	An base class for phylogenetic trees.
+	
+	This class encapsulates both rooted and unrooted trees, so the two may be
+	easily interconverted and compared. As a consequence, not all methods apply 
+	for all instances (e.g. subtree traversal can only be used on rooted
+	trees). This class can also serves as an interface or base to other, more
+	specialised tree classes. It is called `Ptree` to dinstinguish it from the
+	module name.
+	
+	In-order iteration isn't provided, as it is meaningless outside strictly
+	bifurcating trees.
+	
+	"""
+	# TODO: default node and branch properties for the tree?
+	# TODO: tree should function as factory for b & n to acheive this?
+	# TODO: for rooted trees & some display, nodes have to order. Odict?
+	# TODO: c'tor shoudl provide / allow translation table & impl
+	# TODO: c'tor should provide / allow distance math & default blen?
+
+	## LIFECYCLE:
+	def __init__ (self):
+		# nested dict to go from node pairs to branches d[n1][n2] -> b
+		self._nodes = {}
+		# single layer dict to go from branch to nodes d[b] -> (n1, n2)
+		self._branches = {}
+		# the tree root if defined
+		self._root = None
+		self._root_branch = None
+		
+	def __del__ (self):
+		"""
+		Clean up the tree before deletion.
+		
+		This is necessary for piece of mind due to some internal cyclic data
+		structures. Note that there are circumstances in Python where object
+		destruction isn't orderly (e.g. when a session is closed) causing the
+		issuing of alarming but harmless errors (e.g. "no attribute
+		called _branches")  
+		"""
+		# destroy all references to nodes and branches
+		self._branches.clear()
+		for n in self._nodes:
+			n.clear()
+		self._nodes.clear()
+
+	def _copy_nodes_and_branches (self):
+		"""
+		Return copies of the node and branch data structures.
+
+		Internal method, for use in copying the tree. Nodes and branches
+		are left alone, only the topology is copied. This is written as a
+		seperate method for possible use in derived classes.
+
+		:Returns:
+			The node and branch dictionaries.
+
+		"""
+		# copy topology from previous tree, keeping nodes and branches
+		node_dict = {}
+		branch_dict = {}
+		for node, neighbour_dict in self._nodes.iteritems():
+			new_neighbours = {}
+			for neighbour, branch in neighbour_dict.iteritems():
+				new_neighbours[neighbour] = branch
+				branch_dict._branches[branch] = (node, neighbour)
+			node_dict._nodes[node] = new_neighbours
+		return node_dict, branch_dict
+
+	def __copy__ (self):
+		"""
+		Return a copy of this tree.
+
+		This makes a copy of the tree (i.e. the topology). All node and branch
+		properties are kept and shared between the new and old tree.
+		"""
+		# TODO: test
+		new_tree = BaseTree()
+		new_tree._nodes, new_tree._branches = self._copy_nodes_and_branches()
+		return new_tree
+
+	def _deepcopy_nodes_and_branches (self):
+		"""
+		Return deepcopies of the node and branch data structures.
+
+		Internal method, for use in deepcopying the tree. All nodes and branches
+		are new and independent of the originals. This is written as a seperate
+		method for possible use in derived classes.
+
+		:Returns:
+			The node and branch dictionaries and a dictionary mapping the
+			original nodes to the new ones.
+
+		"""
+		# TODO: test
+		# TODO: copy property values as well?
+		## Main:
+		# create cache to map old objects to new
+		copied_objs = {}
+		def get_copy (orig_obj):
+			new_obj = copied_objs.get (orig_obj, None)
+			if (new_obj == None):
+				new_obj = deepcopy (orig_obj)
+				copied_objs[orig_obj] = new_obj
+			return new_obj
+		# reconstruct data structures, replacing old objs with new
+		node_dict = {}
+		branch_dict = {}
+		for node, neighbour_dict in self._nodes.iteritems():
+			new_node = get_copy (node)
+			new_neighbours = {}
+			for neighbour, branch in neighbour_dict.iteritems():
+				new_neigh = get_copy (neighbour)
+				new_branch = get_copy (branch)
+				new_neighbours[new_neigh] = new_branch
+				branch_dict[new_branch] = (new_node, new_neigh)
+			node_dict[new_node] = new_neighbours
+		## Postconditions & return:
+		return node_dict, branch_dict, copied_objs
+
+	def __deepcopy__ (self, visit={}):
+		"""
+		Return a wholly independent copy of this tree.
+
+		This makes a copy of all tree elements tree (i.e. topology, node and
+		branch contents).
+		"""
+		## Main:
+		new_tree = BaseTree()
+		new_tree._nodes, new_tree._branches, newold_map = \
+			self._deepcopy_nodes_and_branches()
+		## Postconditions & return:
+		return new_tree
+		
+
+	## ACCESSORS:
+	# Tree accessors:
+	def is_rooted (self):
+		"""
+		Is a root defined for this tree?
+		"""
+		# TODO: if the rot is deleted, this should update
+		return (self._root is None)
+		
+	def count_nodes (self):
+		"""
+		How many nodes does this tree contain?
+		
+		"""
+		return len (self._nodes)
+
+	def __len__ (self):
+		"""
+		What size is this tree (how many nodes does it contain)?
+		
+		"""
+		return self.count_nodes()
+
+	def is_empty (self):
+		"""
+		Does the tree have no nodes?
+
+		Then how does it smell?
+		
+		"""
+		return (self.count_nodes() == 0)
+
+	def count_branches (self):
+		"""
+		How many branches does this tree contain?
+
+		This will be equal to ``count_nodes() - 1``, but we calculate it
+		independently. Note this doesn't count any theoretical branch running
+		off the root.
+
+		"""
+		return len (self._branches)
+
+	def count_tip_nodes (self):
+		"""
+		How many tips / leaves / terminal nodes does this tree have?
+		
+		"""
+		# TODO: need count_internal_nodes?
+		return len ([1 for n in self.iter_tip_nodes()])
+
+	def is_bifurcating (self, assume_root_branch=True):
+		"""
+		Is this a strictly binary tree?
+
+		Many algorithms require binary trees. We test this by counting the
+		number of neighbours of each node.  A twist is introduced in the
+		case of rooted trees, as the root has an inferred extra neighbour. 
+		
+		"""
+		# TODO: allow modification of root behaviour
+		## Main:
+		# walk the tree and look for a node that isn't binary
+		root = self.root
+		for node in self.iter_nodes():
+			num_neighbours = self.count_adjacent_nodes (node)
+			# root must have 2 neighbours
+			if (assume_root_branch and (node is root)):
+				if (num_neighbours != 2):
+					return False
+			# non-root nodes must have 3 neighbours or be tips
+			else:
+				if (num_neighbours not in [1, 3]):
+					return False					
+		return True
+
+	def has_singletons (self, assume_root_branch=True):
+		"""
+		Does this tree contain internal nodes with only a single child?
+
+		Many algorithms or parsers assume that all nodes have at least 2 
+		descendants (e.g. most Newick readers). In reconstructed phylogenies,
+		this holds because internal nodes are evidenced by at least two
+		children. But when simulating the growth of phylogenies, in cases of
+		phyletic transformation or extinction, we can often end up with
+		internal nodes that have only two neighbours, i.e. where a node has
+		given rise to a single other node. This function checks for those
+		exceptions by counting neighbours. Again, there is an complexity in the
+		case of rooted trees, as the root has an inferred extra neighbour.
+
+		Note: there must be a technical term for this but I haven't found
+		it.
+		"""
+		# TODO: allow modification of root behaviour
+		## Main:
+		# walk the tree an look for a node that isn't binary
+		root = self.root
+		for node in self.iter_nodes():
+			num_neighbours = self.count_adjacent_nodes (node)
+			if (assume_root_branch and (node is root)):
+				if (num_neighbours == 1):
+					return True
+			else:
+				if (num_neighbours == 2):
+					return True
+		return False
+
+	def has_polytomies (self, assume_root_branch=True):
+		"""
+		Does this tree contain internal nodes with evidence of mutltiple splits?
+
+		Are there any nodes at which there appears to have been a split into
+		more than 2 children? Again, some algorithms don't behave well in these
+		cases and so we check for them. This is not quite the obverse of
+		``is_bifurcating`` - tree may contain no polytomies, but may not be
+		bifurcating. And again, rooted trees behave differently.
+		"""
+		## Main:
+		# walk the tree and look for a node that is higher than order 3
+		root = self.root
+		for node in self.iter_nodes():
+			num_neighbours = self.count_adjacent_nodes (node)
+			if (assume_root_branch and (node is root)):
+				if (2 < num_neighbours):
+					return True
+			else:
+				if (3 < num_neighbours):
+					return True
+		return False
+
+	# Node accessors:
+	def get_parent (self, node):
+		"""
+		Return the parent of this node.
+		
+		This is an experimental method, to guage the efficacy of determining
+		parents on the fly. Parentage throughoput a tree is defined solely by
+		the position of the root and so a lot of internal paperwork can be saved
+		by *just* recording the root. 
+		"""
+		# NOTE: it may be easier to traverse from the target to the root,
+		# rather than vice-versa
+		## Preconditions:
+		assert (self.is_rooted()), "this method requires a rooted tree"
+		## Main:
+		prev_node = None
+		for n in self.iter_nodes_preorder():
+			if (n is node):
+				return prev_node
+			else:
+				prev_node = n
+		assert (False), "node '%s' is not a member of this tree" % node
+
+	def count_adjacent_nodes (self, node):
+		"""
+		How many nodes are directly adjacent to this one?
+
+		In graph theory terms, this gives the *order* of the node.
+		"""
+		return len (self._nodes[node])
+
+	def is_node_tip (self, node):
+		"""
+		Is this a terminating (leaf) node?
+		"""
+		# NOTE: we allow for singleton root nodes
+		return (self._root != node) and (self.count_adjacent_nodes (node) == 1)
+
+	def get_nodes (self, branch):
+		"""
+		Return the nodes abutting either end of a branch.
+
+		:Returns:
+			A tuple of the two nodes. Order is not specified.
+
+		"""
+		return self._branches[branch]
+
+	# Branch accessors:
+	def get_branch (self, node1, node2):
+		"""
+		Return the branch running between two nodes.
+		"""
+		return self._nodes[node1][node2]
+
+	def get_distance (self, node1, node2):
+		"""
+		Get the distance between two adjacent nodes.
+		
+		This is just shorthand for `get_branch()` and `branch.distance()`.
+		"""
+		branch = self.get_branch (node1, node2)
+		return branch.distance()
+
+	def get_centroid_nodes (self):
+		"""
+		Return the nodes which are closest to the tree centroid.
+
+		As per Jordan (1869), the centroid is the point at which the number of
+		nodes on either side are most equal, the best possible balance. A tree
+		will have either one or two centroids. If two, they will be neigbours,
+		and both are returned.
+
+		We calculate this by 'eating away' at the tips of the tree, until only 1
+		or 2 are left. Put another way, we list the nodes and their order,
+		remove the nodes with order 1 and lower the order of any nodes they are
+		attached to, and repeat until 1 or 2 are left.
+
+		There are some apparent conflicts with definition. According to
+		Mathworld, the 'weight' of a node is equal to the distance to the
+		furtherest node, and the centroid is the node with the lowest 'weight'.
+
+		:Returns:
+			A list of the centroids.
+
+		"""
+		## Main:
+		# get a dict of nodes and orders
+		residue_nodes = dict ([(n, self.count_adjacent_nodes (n)) \
+			for n in self.iter_nodes()])
+
+		while (2 < len (residue_nodes)):
+			outer_nodes = [n for n, v in residue_nodes.iteritems() if (v == 1)]
+			for node in outer_nodes:
+				del residue_nodes[node]
+				for neighbour in self.iter_adjacent_nodes (node):
+					if (residue_nodes.has_key (neighbour)):
+						residue_nodes[neighbour] -= 1
+
+		## Return:
+		return residue_nodes.keys()
+
+	def get_dists_from_node (self, node, dist_fxn=None):
+		"""
+		Return the distance that nodes lie from a given node.
+
+		"""
+		# TODO: allow multiple nodes?
+		## Preparations:
+		if (dist_fxn is None):
+			dist_fxn = lambda a, b: self.get_distance (a, b)
+		## Main:
+		remaining_nodes = [n for n in self.iter_nodes() if n is not node]
+		pending_nodes = [node]
+		all_nodes = {node: 0}
+		while pending_nodes:
+			curr_node = pending_nodes.pop(0)
+			dist = all_nodes[curr_node]
+			for curr_neighbour in self.iter_adjacent_nodes (curr_node):
+				if (curr_neighbour in remaining_nodes):
+					all_nodes[curr_neighbour] = dist + \
+						dist_fxn (curr_node, curr_neighbour)
+					pending_nodes.append (curr_neighbour)
+					remaining_nodes.remove (curr_neighbour)
+		return all_nodes
+
+	def get_tips_subtended (self, center):
+		"""
+		How many tip nodes eventually derive from this node.
+
+		We define tips to subtend themselves (and therefore be valued as 1) and
+		the 'center' of the tree to subtend all tips.
+
+		:Returns:
+			A dictionary of node - number of tips.
+
+		"""
+		# TODO: should be iter_subtree_tips?
+		## Preparations:
+
+		## Main:
+		tips_subtended = {}
+		for node in self.iter_nodes_postorder (center):
+			if (self.is_node_tip (node)):
+				tips_subtended[node] = 1
+			else:
+				sum_tips = 0
+				for child in self.iter_adjacent_nodes (node):
+					sum_tips += tips_subtended.get (child, 0)
+				tips_subtended[node] = sum_tips
+		return tips_subtended
+
+	def get_distance_from_node (self, center, dist_fxn=None):
+		"""
+		Return the distance that nodes lie from a given node.
+
+		By definition, the node itself lies 0 distance.
+		"""
+		# TODO: allow multiple nodes?
+		## Preparations:
+		if (dist_fxn is None):
+			dist_fxn = lambda a, b: self.get_distance (a, b)
+		## Main:
+		dist_from_center = {}
+		for node in self.iter_nodes_preorder (center):
+				sum_dist = 0.0
+				for parent in self.iter_adjacent_nodes (node):
+					if dist_from_center.has_key (parent):
+						sum_dist = dist_from_center[parent] + \
+							dist_fxn (node, parent)
+				dist_from_center[node] = sum_dist
+		return dist_from_center
+
+	## MUTATORS:
+	def unroot (self):
+		self.root = None
+		
+	def reroot (self, new_root):
+		self.root = new_root
+		
+	def add_node (self, parent=None, node_props=None, distance=None,
+			branch_props=None):
+		"""
+		Create a node and connect it to the rest of the tree.
+
+		:Params:
+			parent Node
+				The node to connect the new node to. If this is the first node,
+				this argument should be unused.
+
+			dist
+				The distance of the newly created branch between the parent and
+				new node. If this is the first node, this argument should be
+				unused.
+
+			node_props dict or mapping
+				Annotations on the newly created node.
+
+			branch_props dict or mapping
+				Annotations on the newly created branch between the parent and
+				new node. If this is the first node, this argument should be
+				unused.
+
+		:Returns:
+			The newly created node.
+
+		"""
+		## Preconditions:
+		# if this is the first node, don't need parent or branch_props
+		if (self.count_nodes() == 0):
+			assert ((parent is None) and (branch_props is None)), \
+				"no branch can be created for initial node"
+			return self.add_first_node (node_props)
+		else:
+			assert (parent is not None), \
+				"Subsequent nodes must be connected to the rest of the tree"
+			new_node = self._create_node (node_props)
+			new_branch = self._create_branch (distance, branch_props)
+			self._link_nodes (parent, new_branch, new_node)
+			return new_node, new_branch
+
+	def add_first_node (self, node_props=None):
+		"""
+		Create the first node in the tree.
+
+		A convenience method wrapping ``add_node``, given that many of its
+		arguments concerning branches are not used when creating the first node.
+
+		"""
+		# TODO: accept a distance and use it as a node annotation on the root?
+		return self._create_node (node_props)
+		
+	def add_root (self, node_props=None):
+		"""
+		Create the first node in a rooted tree.
+
+		A convenience method wrapping ``add_node``, given that many of its
+		arguments concerning branches are not used when creating the first node.
+
+		"""
+		root = self.add_first_node (node_props)
+		self.reroot (root)
+		return root	
+
+	def insert_node_between (self, parent, child, node_props=None, distance=None,
+			branch_props=None):
+		"""
+		Insert a node between the two given.
+
+		In other programs, this is referred to as bisect. It behaves like the
+		other node creation functions, and asides from the insertion, does not
+		alter the tree structure (i.e. branchlengths on other nodes are not
+		touched). The child node (the one being inserted above), stays the same
+		distance away from the new node as it was from its old parent. In effect
+		this stretches away the node below with the introduction of the new.
+
+		While we talk here about placing a new node above a child and below it's
+		parent, this usage is arbitary. By swapping the order of the nodes, the
+		same distance could be maintained from the parent to the new node.
+		Note that currently ordering is not maintained.
+		"""
+		# NOTE: parent --(new_branch)--> new_node --(old_branch)--> child
+		# do upper (new) branch
+		new_node = self._create_node (node_props)
+		new_branch = self._create_branch (distance, branch_props)
+		self._link_nodes (parent, new_branch, new_node)
+		# move lower (old) branch
+		old_branch = self._nodes[parent][child]
+		del self._nodes[parent][child]
+		del self._nodes[child][parent]
+		self._nodes[new_node][child] = self._nodes[child][new_node] = old_branch
+		self._branches[old_branch] = (new_node, child)
+		## Return:
+		return new_node
+
+	def collapse_node_into (self, dead_node, new_neighbour):
+		"""
+		Remove a node, moving any connections to a given neighbour.
+		
+		This is intended for use in creating polytomies, or destroying singletons
+		that may create algorithmic problems or internal nodes that may not exist.
+		The opposite of `insert_node`, this essentially "retracts" a node
+		into its parent, swapping it for its children. This is exactly like
+		collapsing into a polytomy. In effect the branch connecting the child
+		to the parent disappears.
+		This deletes a node and its branch to another node while preserving
+		all other objects by reconnecting them to that neighbour. For example,
+		given nodes ``{X, A, B, C}`` where ``A``, ``B`` and ``C`` are connected to ``X`` by branches
+		a, b & c respectively::
+		
+			collapse_into (X, A)
+			
+		would result in the deletion of ``X`` and ``a``, with nodes ``B`` & ``C`` now adjacent
+		``A`` with branches ``b`` & ``c``.
+		
+		"""
+		# TODO: allow for distance transformation
+		# TODO: assert connection?
+		## Main:
+		# gather the nodes & branches to be preserved
+		neighbours = [n for n in self.iter_adjacent_nodes (dead_node)]
+		branches = [self._unlink_nodes (dead_node, neighbour) for n in neighbours]
+		for n, b in zip (neighbours, branches):
+			if (n is not new_neighbour):
+				self._link (new_neighbour, b, n)
+
+	def add_nodes_from (self, nested_seq, node_props_fn=None, dist_fn=None, branch_props_fn=None):
+		"""
+		Add nodes and branches from a series of nested sequences.
+		"""
+		# TODO: allow adding for mappings?
+		# TODO: allow appending onto pre-existing nodes? Needs a start-point.
+		# TODO: allow functions as non-callables (constants) and wrap?
+		## Preconditions & preparations:
+		if (node_props_fn is None):
+			node_props_fn = lambda x: None
+		if (dist_fn is None):
+			dist_fn = lambda x: None
+		if (branch_props_fn is None):
+			branch_props_fn = lambda x: None
+		## Main:
+		initial_node = add_first_node (node_props_fn (nested_seq))
+		for child in nested_seq:
+			self._add_nodes_from_seq (initial_node, child, node_props_fn,
+				dist_fn, branch_props_fn)
+
+	def clear (self):
+		"""
+		Empty the tree, removing all nodes and branches.
+		"""
+		# NOTE: this may be needed to break circular references
+		self._branches.clear()
+		for item in self._nodes.values():
+			item.clear()
+		self._nodes.clear()
+		
+	def shift_neighbours (self, node, shift=1):
+		"""
+		Change the ordering of connections to adjacent nodes.
+		"""
+		# TODO: finish
+		num_neighbours = self.count_neighbours (node)
+		shift = shift % num_neighbours
+
+	## ITERATORS
+	def iter_nodes (self):
+		"""
+		Traverse all nodes in the tree.
+
+		The order of iteration isn't guaranteed to be consistent.
+		
+		"""
+		for n in self._nodes.iterkeys():
+			yield n
+
+	def iter_nodes_if (self, cond):
+		"""
+		Traverse all nodes in the tree that meet a given condition.
+
+		See `iter_nodes` for further notes. 
+		
+		"""
+		# This could use 'itertools' but we want compatiability with jython
+		for n in self._nodes:
+			if (cond (tree, n)):
+				yield n
+
+	def iter_adjacent_nodes (self, node):
+		"""
+		Traverse directly adjacent nodes. 
+
+		See `iter_nodes` for further notes.
+		
+		"""
+		for n in self._nodes[node].keys():
+			yield n
+
+	def iter_adjacent_nodes_except (self, node, ignore):
+		"""
+		Traverse directly adjacent nodes except for one.
+
+		It's useful
+		where iteration has to avoid back-tracking (e.g. moving through an unrooted
+		tree). See `iter_nodes` for further notes.
+		"""
+		# TODO: expand to a list of ignored nodes?
+		for n in self._nodes[node].keys():
+			yield n
+
+	def iter_nodes_if (self, cond):
+		"""
+		Traverse the nodes that fulfil a given condition.
+
+		:Params:
+			cond function
+				A function that accepts tree and node arguments, returning
+				True if the node is accepted.
+
+		"""
+		for n in self._nodes:
+			if (cond (self, n)):
+				yield n
+
+	def iter_internal_nodes (self):
+		"""
+		Traverse the internal nodes of the tree.
+		
+		The order of iteration isn't guaranteed to be consistent. Notice that in
+		rooted trees, the root is included unless it is a singleton.
+		"""
+		return self.iter_nodes_if (lambda t, n: (1 < t.count_adjacent_nodes (n)))
+
+	def iter_tip_nodes (self):
+		return self.iter_nodes_if (lambda t, n: (t.count_adjacent_nodes (n) == 1))
+
+	def iter_branches (self):
+		"""
+		Traverse all branches in the tree.
+
+		The order of iteration isn't guaranteed to be consistent.
+		"""
+		for b in self._branches:
+			yield b
+
+	def iter_nodes_postorder (self, start, from_node=None):
+		"""
+		Do a postorder (children / tips first) traversal of the nodes.
+		"""
+		# TODO: use `_iter_adjacent_nodes_except`
+		if (start is None):
+			raise StopIteration
+		for neighbour in self.iter_adjacent_nodes (start):
+			if (neighbour is not from_node):
+				for child in self.iter_nodes_postorder (neighbour, start):
+					yield child
+		yield start
+		
+	def iter_branches_postorder (self, start, from_node=None):
+		"""
+		Do a postorder (children / tips first) traversal of the branches.
+		"""
+		# TODO: use `_iter_adjacent_nodes_except`
+		if (start is None):
+			raise StopIteration
+		for neighbour in self.iter_adjacent_nodes (start):
+			if (neighbour is not from_node):
+				for child_br in self.iter_branches_postorder (neighbour, start):
+					yield child_br
+			yield self.get_branch (start, neighbour)
+
+	def iter_nodes_preorder (self, start, from_node=None):
+		"""
+		Do a postorder (children / tips first) traversal of the nodes.
+		"""
+		# TODO: use `_iter_adjacent_nodes_except`
+		# TODO: why did I do this? See below.
+		if (start is None):
+			raise StopIteration
+		yield start
+		for neighbour in self.iter_adjacent_nodes (start):
+			if (neighbour is not from_node):
+				for child in self.iter_nodes_preorder (neighbour, start):
+					yield child
+
+	def iter_nodes_child (self, start):
+		"""
+		Traverse all direct children of a node.
+		
+		Note that unlike other iterators, this requires a explicit starting
+		node.
+		
+		"""
+		## Preconditions & preparation:
+		assert (self.is_rooted()), "this method requires a rooted tree"
+		## Main:
+		parent = self.get_parent (start)
+		for n in self.iter_adjacent_nodes_except (start):
+			yield n
+			
+	# rooted traversal
+	def iter_nodes_subtree (self, start):
+		"""
+		Traverse all nodes in a subtree.
+		
+		Note that no consistent order is guaranteed.
+		"""
+		return self.iter_nodes_postorder_subtree (self, start)	
+
+	def iter_subtree_postorder (self, start):
+		"""
+		Traverse nodes postorder (children / tips first) down from this node.
+		
+			:Params:
+				start
+					The node to start traversal from.
+					
+			:Returns:
+				A tree node.
+		
+		Notice that traversal includes - and finishes with - the start node, at
+		the head of the tree.
+		
+		"""
+		## Preconditions & preparation:
+		assert (self.is_rooted()), "method requires a rooted tree"
+		## Main:
+		parent = self.get_parent (start)
+		# actually yield nodes
+		for child in self.iter_adjacent_nodes_except (start, parent):
+			for curr_node in self._iter_nodes_postorder_subtree (child, parent):
+				yield curr_node
+		yield start
+		
+	def _iter_subtree_postorder (self, start, parent):
+		"""
+		Traverse the nodes postorder within a subtree.
+		
+		"""
+		# actually yield nodes
+		for child in self.iter_adjacent_nodess_except (start, parent):
+			for curr_node in self._iter_nodes_postorder_subtree (child):
+				yield curr_node
+		yield start
+			
+
+	def iter_subtree_preorder (self, start):
+		"""
+		Traverse nodes preorder (ancestors first) down from this node.
+
+			:Params:
+				start
+					The node to start traversal from.
+
+			:Returns:
+				A tree node.
+
+		Notice that traversal includes - and starts with - the start node, at
+		the head of the tree. 
+
+		"""
+		## Preconditions & preparation:
+		assert (self.is_rooted()), "method requires a rooted tree"
+		## Main:
+		parent = self.get_parent (start)
+		# actually yield nodes
+		yield start
+		for child in self.iter_adjacent_nodes_except (start, parent):
+			for curr_node in self._iter_nodes_postorder_subtree (child, parent):
+				yield curr_node
+
+	def _iter_subtree_preorder (self, start, parent):
+		"""
+		Traverse the nodes preorder within a subtree.
+
+
+		"""
+		# actually yield nodes
+		yield start
+		for child in self.iter_adjacent_nodess_except (start, parent):
+			for curr_node in self._iter_nodes_postorder_subtree (child):
+				yield curr_node
+
+				
+	## INTERNALS
+	def _get_root (self):
+		return self._root
+		
+	def _set_root (self, new_root):
+		## Preconditions:
+		assert (new_root is None) or (new_root in self._nodes), \
+			"can't set %s (%s) as tree root" % (type (new_root), new_root)
+		## Main:
+		self._root = new_root
+		
+	root = property (_get_root, _set_root)
+	
+	def _create_node (self, props=None):
+		"""
+		Make a node and record supporting data.
+
+		Internal method: instantiates the node and makes a slot in the internal
+		node dictionary.
+		"""
+		if (props is None):
+			new_node = Node()
+		else:
+			new_node = Node (props)
+		self._nodes[new_node] = Odict()
+		return new_node
+
+	def _create_branch (self, distance=None, props=None):
+		"""
+		Make a branch and record supporting data.
+
+		Internal method: instantiates the branch, makes a slot in the internal
+		branch dictionary, and stores the branch in nodes dict for the nodes at
+		both ends.
+		"""
+		if (props is None):
+			new_branch = Branch ()
+		else:
+			new_branch = Branch (branch_props)
+		if (distance is not None):
+			new_branch['distance'] = distance
+		self._branches[new_branch] = None
+		return new_branch
+
+	def _link_nodes (self, node_1, branch, node_2):
+		"""
+		Record the data that links the parent and child nodes via the branch.
+		
+		This internal method performs the low-level 'linking' of two nodes
+		via a branch. Notice that that all objects (nodes and branches) are presumed to
+		already exist and that incautious use can lead to trees with cycles.
+		
+		"""
+		self._branches[branch] = (node_1, node_2)
+		self._nodes[node_2][node_1] = \
+			self._nodes[node_1][node_2] = branch
+
+	def _unlink_nodes (self, node_1, node_2):
+		"""
+		Break the connection between two nodes.
+		
+		This internal method is intended for low-level deletion of topology.
+		It destroys the implementation details that link the two nodes and will result
+		in the deletion of the connecting branch and either of the nodes, if they are
+		not referred to elsewhere. Notice that incaustious use can lead to the cleaving
+		of a tree into unconnected nodes.
+		 
+		"""
+		old_branch = self._nodes[node_1][node_2]
+		del self._nodes[node_1][node_2]
+		del self._nodes[node_2][node_1]
+		del self._branches[old_branch]
+		return old_branch
+
+	def _validate (self):
+		"""
+		A self diagnosis function that checks the tree is in a valid state.
+
+		This is intended for use during development, so various tree-building
+		and reading functions can be tested to check they are internally
+		consistent and correct. It is not intended to be fast or computationally
+		cheap.
+
+		"""
+		# check branch data correlates with nodes
+		for branch in self.iter_branches():
+			a, b = self.get_nodes (branch)
+			assert (self._nodes[a].has_key(b)), "a doesn't have b as neighbour"
+			assert (self._nodes[b].has_key(a)), "b doesn't have a as neighbour"
+			assert (self._nodes[a][b] is branch), "ab doesn't link to branch"
+			assert (self._nodes[b][a] is branch), "ba doesn't link to branch"
+
+		# check node data correlates with each other and branches
+		for node in self.iter_nodes():
+			neighbours = self._nodes[node].keys()
+			for n in neighbours:
+				assert (self._nodes[n].has_key(node)), "neighbour doesn't link to node"
+				assert (self._nodes[node][n] is self._nodes[n][node]), "node and neighbour don't agree on branch"
+				branch = self._nodes[node][n]
+				assert (self._branches.has_key (branch)), "branch is not stored"
+				assert (node in self._branches[branch]), "node not linked by branch"
+				assert (n in self._branches[branch]), "neighbour not linked by branch"
+
+	def _dump (self):
+		"""
+		A crude function to aid debugging structural problems
+		"""
+		i = 1;
+		for n in self.iter_nodes():
+			n['_dumpid'] = 'n%s' % i
+			i += 1
+		for b in self.iter_branches():
+			b['_dumpid'] = 'b%s' % i
+			i += 1
+
+		MSG ("Nodes:")
+		for n in self._nodes.keys():
+			MSG (n.get ('_dumpid'), ':', n)
+			for c, b in self._nodes[n].iteritems():
+				MSG ('-', c.get ('_dumpid'), b.get ('_dumpid'), b.distance())
+		MSG ("Branches:")
+		for b, node_list in self._branches.iteritems():
+			MSG (b.get ('_dumpid'), ':', b)
+			for n in node_list:
+				MSG ('-', n.get ('_dumpid'))
+				
+
+
+### TEST & DEBUG ###
+
+def _doctest ():
+	import doctest
+	doctest.testmod ()
+
+
+### MAIN ###
+
+if __name__ == '__main__':
+	_doctest()
+
+
+### END ########################################################################

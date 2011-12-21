@@ -1,0 +1,12 @@
+README.txt
+setup.py
+Py_phylo_core.egg-info/PKG-INFO
+Py_phylo_core.egg-info/SOURCES.txt
+Py_phylo_core.egg-info/dependency_links.txt
+Py_phylo_core.egg-info/entry_points.txt
+Py_phylo_core.egg-info/namespace_packages.txt
+Py_phylo_core.egg-info/not-zip-safe
+Py_phylo_core.egg-info/requires.txt
+Py_phylo_core.egg-info/top_level.txt
+phylo/__init__.py
+phylo/core/__init__.py
