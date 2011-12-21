@@ -3,10 +3,11 @@
 """
 A simple ordered dictionary.
 
-Within phylotree, this is used to hold node-node relationships, so that a
+Within phylo.core this is used to hold node-node relationships, so that a
 consistent order of branches can be kept and manipulated. More complex
 ordered dictionary implementations are possible and available (e.g.
-[vs_odict]__), but this will do for our purposes.
+[vs_odict]__), but this will do for our purposes. The version that crops up in
+Python 2.7 is unsuitable as we need support for Jython and lesser versions.
 
 .. [vs_odict] "Odict". At <http://www.voidspace.org.uk/python/odict.html>.
 

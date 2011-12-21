@@ -3,7 +3,7 @@
 """
 A simple dict-like object for storing properties.
 
-In phylotree, nodes and branches are basically lists of properties (topology
+In phylotree, nodes and branches are basically lists of key-values (topology
 is stored in the tree proper). This class thus serves as a useful base for
 those.
 

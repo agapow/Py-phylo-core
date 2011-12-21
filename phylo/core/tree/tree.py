@@ -26,7 +26,7 @@ __all__ = [
 
 ### IMPLEMENTATION ###
 
-class Ptree (object):
+class Tree (object):
 	"""
 	An base class for phylogenetic trees.
 	
@@ -34,8 +34,7 @@ class Ptree (object):
 	easily interconverted and compared. As a consequence, not all methods apply 
 	for all instances (e.g. subtree traversal can only be used on rooted
 	trees). This class can also serves as an interface or base to other, more
-	specialised tree classes. It is called `Ptree` to dinstinguish it from the
-	module name.
+	specialised tree classes. 
 	
 	In-order iteration isn't provided, as it is meaningless outside strictly
 	bifurcating trees.
@@ -44,11 +43,11 @@ class Ptree (object):
 	# TODO: default node and branch properties for the tree?
 	# TODO: tree should function as factory for b & n to acheive this?
 	# TODO: for rooted trees & some display, nodes have to order. Odict?
-	# TODO: c'tor shoudl provide / allow translation table & impl
+	# TODO: c'tor should provide / allow translation table & impl
 	# TODO: c'tor should provide / allow distance math & default blen?
 
 	## LIFECYCLE:
-	def __init__ (self):
+	def __init__ (self, dist_type=float):
 		# nested dict to go from node pairs to branches d[n1][n2] -> b
 		self._nodes = {}
 		# single layer dict to go from branch to nodes d[b] -> (n1, n2)
@@ -56,6 +55,7 @@ class Ptree (object):
 		# the tree root if defined
 		self._root = None
 		self._root_branch = None
+		self._dist_type = dist_type
 		
 	def __del__ (self):
 		"""
