@@ -79,7 +79,7 @@ class Tree (object):
 
 		Internal method, for use in copying the tree. Nodes and branches
 		are left alone, only the topology is copied. This is written as a
-		seperate method for possible use in derived classes.
+		separate method for possible use in derived classes.
 
 		:Returns:
 			The node and branch dictionaries.
@@ -113,7 +113,7 @@ class Tree (object):
 		Return deepcopies of the node and branch data structures.
 
 		Internal method, for use in deepcopying the tree. All nodes and branches
-		are new and independent of the originals. This is written as a seperate
+		are new and independent of the originals. This is written as a separate
 		method for possible use in derived classes.
 
 		:Returns:
@@ -297,8 +297,8 @@ class Tree (object):
 		"""
 		Return the parent of this node.
 		
-		This is an experimental method, to guage the efficacy of determining
-		parents on the fly. Parentage throughoput a tree is defined solely by
+		This is an experimental method, to gauge the efficacy of determining
+		parents on the fly. Parentage throughout a tree is defined solely by
 		the position of the root and so a lot of internal paperwork can be saved
 		by *just* recording the root. 
 		"""
