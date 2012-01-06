@@ -13,14 +13,14 @@ __docformat__ = 'restructuredtext en'
 from exceptions import NotImplementedError
 from copy import deepcopy
 
-from relais.dev.common import *
+#from relais.dev.common import *
 
 from phylo.core.impl.odict import Odict
 from node import Node
 from branch import Branch
 
 __all__ = [
-	'Ptree',
+	'Tree',
 ]
 
 
@@ -39,6 +39,23 @@ class Tree (object):
 	In-order iteration isn't provided, as it is meaningless outside strictly
 	bifurcating trees.
 	
+	For example::
+	
+		# make the tree (A, (B, C))
+		>>> t = Tree()
+		>>> t.count_nodes()
+		0
+		>>> r, x = t.add_node (None, {'name': 'root'})
+		>>> a, x = t.add_node (r, {'name': 'A'})
+		>>> i, x = t.add_node (r, {'name': 'BC'})
+		>>> b, x = t.add_node (i, {'name': 'B'})
+		>>> c, x = t.add_node (i, {'name': 'C'})
+		>>> t.count_nodes()
+		5
+		>>> t.count_branches()
+		4
+		
+
 	"""
 	# TODO: default node and branch properties for the tree?
 	# TODO: tree should function as factory for b & n to acheive this?
@@ -73,29 +90,6 @@ class Tree (object):
 			n.clear()
 		self._nodes.clear()
 
-	def _copy_nodes_and_branches (self):
-		"""
-		Return copies of the node and branch data structures.
-
-		Internal method, for use in copying the tree. Nodes and branches
-		are left alone, only the topology is copied. This is written as a
-		separate method for possible use in derived classes.
-
-		:Returns:
-			The node and branch dictionaries.
-
-		"""
-		# copy topology from previous tree, keeping nodes and branches
-		node_dict = {}
-		branch_dict = {}
-		for node, neighbour_dict in self._nodes.iteritems():
-			new_neighbours = {}
-			for neighbour, branch in neighbour_dict.iteritems():
-				new_neighbours[neighbour] = branch
-				branch_dict._branches[branch] = (node, neighbour)
-			node_dict._nodes[node] = new_neighbours
-		return node_dict, branch_dict
-
 	def __copy__ (self):
 		"""
 		Return a copy of this tree.
@@ -107,46 +101,7 @@ class Tree (object):
 		new_tree = BaseTree()
 		new_tree._nodes, new_tree._branches = self._copy_nodes_and_branches()
 		return new_tree
-
-	def _deepcopy_nodes_and_branches (self):
-		"""
-		Return deepcopies of the node and branch data structures.
-
-		Internal method, for use in deepcopying the tree. All nodes and branches
-		are new and independent of the originals. This is written as a separate
-		method for possible use in derived classes.
-
-		:Returns:
-			The node and branch dictionaries and a dictionary mapping the
-			original nodes to the new ones.
-
-		"""
-		# TODO: test
-		# TODO: copy property values as well?
-		## Main:
-		# create cache to map old objects to new
-		copied_objs = {}
-		def get_copy (orig_obj):
-			new_obj = copied_objs.get (orig_obj, None)
-			if (new_obj == None):
-				new_obj = deepcopy (orig_obj)
-				copied_objs[orig_obj] = new_obj
-			return new_obj
-		# reconstruct data structures, replacing old objs with new
-		node_dict = {}
-		branch_dict = {}
-		for node, neighbour_dict in self._nodes.iteritems():
-			new_node = get_copy (node)
-			new_neighbours = {}
-			for neighbour, branch in neighbour_dict.iteritems():
-				new_neigh = get_copy (neighbour)
-				new_branch = get_copy (branch)
-				new_neighbours[new_neigh] = new_branch
-				branch_dict[new_branch] = (new_node, new_neigh)
-			node_dict[new_node] = new_neighbours
-		## Postconditions & return:
-		return node_dict, branch_dict, copied_objs
-
+	
 	def __deepcopy__ (self, visit={}):
 		"""
 		Return a wholly independent copy of this tree.
@@ -504,7 +459,7 @@ class Tree (object):
 		if (self.count_nodes() == 0):
 			assert ((parent is None) and (branch_props is None)), \
 				"no branch can be created for initial node"
-			return self.add_first_node (node_props)
+			return self.add_first_node (node_props), None
 		else:
 			assert (parent is not None), \
 				"Subsequent nodes must be connected to the rest of the tree"
@@ -517,8 +472,8 @@ class Tree (object):
 		"""
 		Create the first node in the tree.
 
-		A convenience method wrapping ``add_node``, given that many of its
-		arguments concerning branches are not used when creating the first node.
+		A convenience method wrapping ``add_node``, given that its arguments
+		concerning branches are not used when creating the first node.
 
 		"""
 		# TODO: accept a distance and use it as a node annotation on the root?
@@ -528,8 +483,9 @@ class Tree (object):
 		"""
 		Create the first node in a rooted tree.
 
-		A convenience method wrapping ``add_node``, given that many of its
-		arguments concerning branches are not used when creating the first node.
+		A convenience method wrapping ``add_node``, given that its arguments
+		concerning branches are not used when creating the first node. It also
+		sets this first node as the root.
 
 		"""
 		root = self.add_first_node (node_props)
@@ -854,8 +810,70 @@ class Tree (object):
 			for curr_node in self._iter_nodes_postorder_subtree (child):
 				yield curr_node
 
-				
+	
 	## INTERNALS
+	def _copy_nodes_and_branches (self):
+		"""
+		Return copies of the node and branch data structures.
+
+		Internal method, for use in copying the tree. Nodes and branches
+		are left alone, only the topology is copied. This is written as a
+		separate method for possible use in derived classes.
+
+		:Returns:
+			The node and branch dictionaries.
+
+		"""
+		# copy topology from previous tree, keeping nodes and branches
+		node_dict = {}
+		branch_dict = {}
+		for node, neighbour_dict in self._nodes.iteritems():
+			new_neighbours = {}
+			for neighbour, branch in neighbour_dict.iteritems():
+				new_neighbours[neighbour] = branch
+				branch_dict._branches[branch] = (node, neighbour)
+			node_dict._nodes[node] = new_neighbours
+		return node_dict, branch_dict
+	
+	def _deepcopy_nodes_and_branches (self):
+		"""
+		Return deepcopies of the node and branch data structures.
+
+		Internal method, for use in deepcopying the tree. All nodes and branches
+		are new and independent of the originals. This is written as a separate
+		method for possible use in derived classes.
+
+		:Returns:
+			The node and branch dictionaries and a dictionary mapping the
+			original nodes to the new ones.
+
+		"""
+		# TODO: test
+		# TODO: copy property values as well?
+		## Main:
+		# create cache to map old objects to new
+		copied_objs = {}
+		def get_copy (orig_obj):
+			new_obj = copied_objs.get (orig_obj, None)
+			if (new_obj == None):
+				new_obj = deepcopy (orig_obj)
+				copied_objs[orig_obj] = new_obj
+			return new_obj
+		# reconstruct data structures, replacing old objs with new
+		node_dict = {}
+		branch_dict = {}
+		for node, neighbour_dict in self._nodes.iteritems():
+			new_node = get_copy (node)
+			new_neighbours = {}
+			for neighbour, branch in neighbour_dict.iteritems():
+				new_neigh = get_copy (neighbour)
+				new_branch = get_copy (branch)
+				new_neighbours[new_neigh] = new_branch
+				branch_dict[new_branch] = (new_node, new_neigh)
+			node_dict[new_node] = new_neighbours
+		## Postconditions & return:
+		return node_dict, branch_dict, copied_objs
+	
 	def _get_root (self):
 		return self._root
 		
@@ -908,9 +926,9 @@ class Tree (object):
 		already exist and that incautious use can lead to trees with cycles.
 		
 		"""
+		# TODO: can we keep track of nodes in only 1 way, rather than both ways
 		self._branches[branch] = (node_1, node_2)
-		self._nodes[node_2][node_1] = \
-			self._nodes[node_1][node_2] = branch
+		self._nodes[node_2][node_1] = self._nodes[node_1][node_2] = branch
 
 	def _unlink_nodes (self, node_1, node_2):
 		"""
@@ -970,16 +988,16 @@ class Tree (object):
 			b['_dumpid'] = 'b%s' % i
 			i += 1
 
-		MSG ("Nodes:")
+		print ("Nodes:")
 		for n in self._nodes.keys():
-			MSG (n.get ('_dumpid'), ':', n)
+			print ("* dumpid %s: %s" % (n.get ('_dumpid'), n))
 			for c, b in self._nodes[n].iteritems():
-				MSG ('-', c.get ('_dumpid'), b.get ('_dumpid'), b.distance())
-		MSG ("Branches:")
+				print ("   - %s (branch %s, dist %s)" % (c.get ('_dumpid'), b.get ('_dumpid'), b.distance()))
+		print ("Branches:")
 		for b, node_list in self._branches.iteritems():
-			MSG (b.get ('_dumpid'), ':', b)
+			print ("* dumpid %s: %s" % (b.get ('_dumpid'), b))
 			for n in node_list:
-				MSG ('-', n.get ('_dumpid'))
+				print ("   - %s" % n.get ('_dumpid'))
 				
 
 

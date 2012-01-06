@@ -25,7 +25,7 @@ class Node (PropertyList):
 
 	This serves to contain node properties and annotations. The actual topology
 	(connections between nodes) are maintained by the tree class, with this as
-	a key. Thus, nodeas may be shared between trees, and seperate
+	a key. Thus, nodes may be shared between trees, and separate
 	implementations for rooted and unrooted trees aren't needed.
 
 	"""

@@ -22,6 +22,7 @@ setup(name='py-phylo-core',
       namespace_packages=['phylo'],
       include_package_data=True,
       zip_safe=False,
+      test_suite = 'nose.collector',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-

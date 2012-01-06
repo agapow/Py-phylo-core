@@ -16,11 +16,17 @@ Python 2.7 is unsuitable as we need support for Jython and lesser versions.
 .. "Sequential dictionary". At <http://home.arcor.de/wolfgang.grafen/Python/Modules/seqdict/Seqdict.html>.
 
 """
+# TODO: can we default to the python built-in one for 2.7+?
+# TODO: adapt to API of Python 2.7+ OrderedDict. Drop-in replacement available
+#	http://code.activestate.com/recipes/576693/
+
 
 __docformat__ = 'restructuredtext en'
 
 
 ### IMPORTS ###
+
+from collections import deque
 
 __all__ = [
 	'Odict',
@@ -40,26 +46,17 @@ class Odict (dict):
 	
 	For example::
 	
-		>>> d = {'c': 2, 'a': 3, 'b': 1}
-		>>> d
-		{'a': 3, 'c': 2, 'b': 1}
-		>>> d.keys()
-		['a', 'c', 'b']
-		>>> d.items()
-		[('a', 3), ('c', 2), ('b', 1)]
-		
 		>>> od = Odict()
-		>>> od['c'] = 2; od['b'] = 1; od['a'] = 3
-		>>> od.keys() == d.keys()
-		True
-		>>> od.ordered_keys()
-		['c', 'b', 'a']
-		>>> od.items() == d.items()
-		True
-		>>> od.ordered_items()
-		[('c', 2), ('b', 1), ('a', 3)]
+		>>> od['c'] = '2'; od['b'] = '1'; od['a'] = '3'
+		>>> ''.join (od.keys())
+		'cba'
+		>>> ''.join (od.ordered_keys())
+		'cba'
+		>>> od.items()
+		[('c', '2'), ('b', '1'), ('a', '3')]
 	
 	"""
+	
 	## LIFECYCLE:
 	def __init__ (self):
 		"""
@@ -67,8 +64,8 @@ class Odict (dict):
 		
 		We don't allow content initialisation in construction, because it
 		is difficult to know what ordering due to the problem of ascertaining
-		what order those items should be in. (If initiliased from a mapping
-		or keyword-pairs, the order is essentially arbitary.)
+		what order those items should be in. (If initialised from a mapping
+		or keyword-pairs, the order is essentially arbitrary.)
 		
 		For example::
 		
@@ -85,7 +82,7 @@ class Odict (dict):
 		"""
 		# NOTE: can't use a set for the indices as they are unordered
 		dict.__init__ (self)
-		self._indices = []
+		self._indices = deque()
 		
 	## ACCESSORS:
 	def ordered_keys (self):
@@ -101,6 +98,8 @@ class Odict (dict):
 			
 		"""
 		return list (self._indices)
+	
+	keys = ordered_keys
 		
 	def ordered_values (self):
 		"""
@@ -116,6 +115,8 @@ class Odict (dict):
 		"""
 		return [self[k] for k in self._indices]
 		
+	values = ordered_values
+	
 	def ordered_items (self):
 		"""
 		Return the dictionary items in order.
@@ -129,6 +130,8 @@ class Odict (dict):
 
 		"""
 		return [(k, self[k]) for k in self._indices]
+	
+	items = ordered_items
 	
 	def ordered_iterkeys (self):
 		"""
@@ -145,6 +148,8 @@ class Odict (dict):
 		for k in self._indices:
 			yield k
 	
+	iterkeys = ordered_iterkeys
+	
 	def ordered_itervalues (self):
 		"""
 		Return an iterator over the dictionary values in order.
@@ -159,7 +164,9 @@ class Odict (dict):
 		"""
 		for k in self._indices:
 			yield self[k]
-								
+	
+	itervalues = ordered_itervalues
+	
 	def ordered_iteritems (self):
 		"""
 		Return an iterator over the dictionary items in order.
@@ -174,6 +181,8 @@ class Odict (dict):
 		"""
 		for k in self._indices:
 			yield (k, self[k])
+	
+	iteritems = ordered_iteritems
 	
 	## MUTATORS::
 	def __setitem__ (self, key, value):
@@ -251,6 +260,8 @@ class Odict (dict):
 			AssertionError: new keys are different to old keys
 		
 		"""
+		# TODO: do I really need this?
+		
 		## Preconditions:
 		new_keys = list (keys)
 		assert (sorted (new_keys) == sorted (self._indices)), \
@@ -281,14 +292,37 @@ class Odict (dict):
 			>>> od.rotate_order (4)
 			>>> od.ordered_keys()
 			['a', 'c', 'b']
-					
+		
 		"""
 		## Preconditions & preparation:
-		shift = shift % len (self._indices)
+		#shift = shift % len (self._indices)
 		## Main:
-		if shift:
-			self._indices = self._indices[-shift:] + self._indices[:-shift]
+		#if shift:
+		#	self._indices = self._indices[-shift:] + self._indices[:-shift]
+		self._indices.rotate(shift)
 		
+		
+	def popitem (last=True):
+		"""
+		Remove and return a (key, value) pair. 
+		
+		The pairs are returned in LIFO order if last is true or FIFO order if
+		false.
+		"""
+		if last:
+			k = self._indices.pop()
+		else:
+			k = self._indices.popLeft()
+		return (k, dict.popitem(self, k))
+
+	def move_to_end (self, key, last=True):
+		self._indices.remove (key)
+		if last:
+			self.indices.append(key)
+		else:
+			self.indices.appendLeft(key)
+
+			
 
 ### TEST & DEBUG ###
 

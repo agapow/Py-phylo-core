@@ -8,6 +8,8 @@ is stored in the tree proper). This class thus serves as a useful base for
 those.
 
 """
+# TODO: restrict keys to strings
+
 
 __docformat__ = 'restructuredtext en'
 
@@ -48,17 +50,28 @@ class PropertyList (object):
 		3
 
 	"""
+	# NOTE: why not use a dictionary itself? Because dictionaries are mutable
+	# and we need to use the node/branch propertylist as a key inside a tree
 	# NOTE: we cannot sublcass dict directly, as this prevents the propertylist
 	# from being used as a key.
-
+	
 	## LIFECYCLE:
 	def __init__ (self, *args, **kwargs):
 		"""
 		Construct a mapping of key-value pairs.
-
+		
 		Note that the restriction on string-only keys in not currently enforced
 		in this constructor.
-
+		
+		For example::
+		
+			>>> p1 = PropertyList({'foo': 1, 'bar': 2})
+			>>> p1['foo'] == 1
+			True
+			>>> p2 = PropertyList(foo=1, bar=2)
+			>>> p2['foo'] == 1
+			True
+			
 		"""
 		self._props = dict (*args, **kwargs)
 
@@ -98,7 +111,6 @@ class PropertyList (object):
 		
 	def clear (self):
 		self._props.clear()
-			
 
 
 

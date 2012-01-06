@@ -1,25 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Classes for representing phylogenetic trees.
+Various base classes for later IO implementation
 
-This package presents a set of pure classes for representing phylogenies, with
-the following features: 
-
-* Attaching abitray 
-
-
+This package does not actually provide any IO functionality, just base classes
+for a consistent interface.
 
 """
 
 __docformat__ = 'restructuredtext en'
-__author__ = "P-M Agapow <pma@agapow.net>"
-__version__ = "0.1"
 
 
 ### IMPORTS ###
 
-from tree import *
+from dialect import *
+from baseio import *
 
 
 ### TEST & DEBUG ###
