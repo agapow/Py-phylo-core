@@ -58,7 +58,7 @@ class Tree (object):
 
 	"""
 	# TODO: default node and branch properties for the tree?
-	# TODO: tree should function as factory for b & n to acheive this?
+	# TODO: tree should function as factory for b & n to achieve this?
 	# TODO: for rooted trees & some display, nodes have to order. Odict?
 	# TODO: c'tor should provide / allow translation table & impl
 	# TODO: c'tor should provide / allow distance math & default blen?
@@ -302,15 +302,6 @@ class Tree (object):
 		"""
 		return self._nodes[node1][node2]
 
-	def get_distance (self, node1, node2):
-		"""
-		Get the distance between two adjacent nodes.
-		
-		This is just shorthand for `get_branch()` and `branch.distance()`.
-		"""
-		branch = self.get_branch (node1, node2)
-		return branch.distance()
-
 	def get_centroid_nodes (self):
 		"""
 		Return the nodes which are closest to the tree centroid.
@@ -424,9 +415,6 @@ class Tree (object):
 	def unroot (self):
 		self.root = None
 		
-	def reroot (self, new_root):
-		self.root = new_root
-		
 	def add_node (self, parent=None, node_props=None, distance=None,
 			branch_props=None):
 		"""
@@ -505,7 +493,7 @@ class Tree (object):
 		this stretches away the node below with the introduction of the new.
 
 		While we talk here about placing a new node above a child and below it's
-		parent, this usage is arbitary. By swapping the order of the nodes, the
+		parent, this usage is arbitrary. By swapping the order of the nodes, the
 		same distance could be maintained from the parent to the new node.
 		Note that currently ordering is not maintained.
 		"""
@@ -592,7 +580,9 @@ class Tree (object):
 		num_neighbours = self.count_neighbours (node)
 		shift = shift % num_neighbours
 
-	## ITERATORS
+	## ITERATORS & TRAVERSAL
+	# Across the whole tree
+	
 	def iter_nodes (self):
 		"""
 		Traverse all nodes in the tree.
@@ -603,19 +593,44 @@ class Tree (object):
 		for n in self._nodes.iterkeys():
 			yield n
 
-	def iter_nodes_if (self, cond):
+	def iter_branches (self):
 		"""
-		Traverse all nodes in the tree that meet a given condition.
+		Traverse all branches in the tree.
 
-		See `iter_nodes` for further notes. 
+		The order of iteration isn't guaranteed to be consistent.
+		"""
+		for b in self._branches:
+			yield b
+	
+	# In relation to a given node
+	
+	def parent_node (self, n):
+		"""
+		Return the parent of this node, or None if root.
+		
+		Note: only sensible if tree is rooted.
+		"""
+		return self._nodes[node].keys()[0]
+	
+	def iter_child_nodes (self, n):
+		"""
+		Traverse all direct children of a node.
+		
+		Note that unlike other iterators, this requires a explicit starting
+		node.
 		
 		"""
-		# This could use 'itertools' but we want compatiability with jython
-		for n in self._nodes:
-			if (cond (tree, n)):
-				yield n
-
-	def iter_adjacent_nodes (self, node):
+		## Preconditions & preparation:
+		assert (self.root), "this method requires a rooted tree"
+		## Main:
+		parent = self.get_parent (n)
+		for c in self.iter_adjacent_nodes (n):
+			if c is parent:
+				continue
+			else:
+				yield c
+		
+	def iter_adjacent_nodes (self, n):
 		"""
 		Traverse directly adjacent nodes. 
 
@@ -625,190 +640,6 @@ class Tree (object):
 		for n in self._nodes[node].keys():
 			yield n
 
-	def iter_adjacent_nodes_except (self, node, ignore):
-		"""
-		Traverse directly adjacent nodes except for one.
-
-		It's useful
-		where iteration has to avoid back-tracking (e.g. moving through an unrooted
-		tree). See `iter_nodes` for further notes.
-		"""
-		# TODO: expand to a list of ignored nodes?
-		for n in self._nodes[node].keys():
-			yield n
-
-	def iter_nodes_if (self, cond):
-		"""
-		Traverse the nodes that fulfil a given condition.
-
-		:Params:
-			cond function
-				A function that accepts tree and node arguments, returning
-				True if the node is accepted.
-
-		"""
-		for n in self._nodes:
-			if (cond (self, n)):
-				yield n
-
-	def iter_internal_nodes (self):
-		"""
-		Traverse the internal nodes of the tree.
-		
-		The order of iteration isn't guaranteed to be consistent. Notice that in
-		rooted trees, the root is included unless it is a singleton.
-		"""
-		return self.iter_nodes_if (lambda t, n: (1 < t.count_adjacent_nodes (n)))
-
-	def iter_tip_nodes (self):
-		return self.iter_nodes_if (lambda t, n: (t.count_adjacent_nodes (n) == 1))
-
-	def iter_branches (self):
-		"""
-		Traverse all branches in the tree.
-
-		The order of iteration isn't guaranteed to be consistent.
-		"""
-		for b in self._branches:
-			yield b
-
-	def iter_nodes_postorder (self, start, from_node=None):
-		"""
-		Do a postorder (children / tips first) traversal of the nodes.
-		"""
-		# TODO: use `_iter_adjacent_nodes_except`
-		if (start is None):
-			raise StopIteration
-		for neighbour in self.iter_adjacent_nodes (start):
-			if (neighbour is not from_node):
-				for child in self.iter_nodes_postorder (neighbour, start):
-					yield child
-		yield start
-		
-	def iter_branches_postorder (self, start, from_node=None):
-		"""
-		Do a postorder (children / tips first) traversal of the branches.
-		"""
-		# TODO: use `_iter_adjacent_nodes_except`
-		if (start is None):
-			raise StopIteration
-		for neighbour in self.iter_adjacent_nodes (start):
-			if (neighbour is not from_node):
-				for child_br in self.iter_branches_postorder (neighbour, start):
-					yield child_br
-			yield self.get_branch (start, neighbour)
-
-	def iter_nodes_preorder (self, start, from_node=None):
-		"""
-		Do a postorder (children / tips first) traversal of the nodes.
-		"""
-		# TODO: use `_iter_adjacent_nodes_except`
-		# TODO: why did I do this? See below.
-		if (start is None):
-			raise StopIteration
-		yield start
-		for neighbour in self.iter_adjacent_nodes (start):
-			if (neighbour is not from_node):
-				for child in self.iter_nodes_preorder (neighbour, start):
-					yield child
-
-	def iter_nodes_child (self, start):
-		"""
-		Traverse all direct children of a node.
-		
-		Note that unlike other iterators, this requires a explicit starting
-		node.
-		
-		"""
-		## Preconditions & preparation:
-		assert (self.is_rooted()), "this method requires a rooted tree"
-		## Main:
-		parent = self.get_parent (start)
-		for n in self.iter_adjacent_nodes_except (start):
-			yield n
-			
-	# rooted traversal
-	def iter_nodes_subtree (self, start):
-		"""
-		Traverse all nodes in a subtree.
-		
-		Note that no consistent order is guaranteed.
-		"""
-		return self.iter_nodes_postorder_subtree (self, start)	
-
-	def iter_subtree_postorder (self, start):
-		"""
-		Traverse nodes postorder (children / tips first) down from this node.
-		
-			:Params:
-				start
-					The node to start traversal from.
-					
-			:Returns:
-				A tree node.
-		
-		Notice that traversal includes - and finishes with - the start node, at
-		the head of the tree.
-		
-		"""
-		## Preconditions & preparation:
-		assert (self.is_rooted()), "method requires a rooted tree"
-		## Main:
-		parent = self.get_parent (start)
-		# actually yield nodes
-		for child in self.iter_adjacent_nodes_except (start, parent):
-			for curr_node in self._iter_nodes_postorder_subtree (child, parent):
-				yield curr_node
-		yield start
-		
-	def _iter_subtree_postorder (self, start, parent):
-		"""
-		Traverse the nodes postorder within a subtree.
-		
-		"""
-		# actually yield nodes
-		for child in self.iter_adjacent_nodess_except (start, parent):
-			for curr_node in self._iter_nodes_postorder_subtree (child):
-				yield curr_node
-		yield start
-			
-
-	def iter_subtree_preorder (self, start):
-		"""
-		Traverse nodes preorder (ancestors first) down from this node.
-
-			:Params:
-				start
-					The node to start traversal from.
-
-			:Returns:
-				A tree node.
-
-		Notice that traversal includes - and starts with - the start node, at
-		the head of the tree. 
-
-		"""
-		## Preconditions & preparation:
-		assert (self.is_rooted()), "method requires a rooted tree"
-		## Main:
-		parent = self.get_parent (start)
-		# actually yield nodes
-		yield start
-		for child in self.iter_adjacent_nodes_except (start, parent):
-			for curr_node in self._iter_nodes_postorder_subtree (child, parent):
-				yield curr_node
-
-	def _iter_subtree_preorder (self, start, parent):
-		"""
-		Traverse the nodes preorder within a subtree.
-
-
-		"""
-		# actually yield nodes
-		yield start
-		for child in self.iter_adjacent_nodess_except (start, parent):
-			for curr_node in self._iter_nodes_postorder_subtree (child):
-				yield curr_node
 
 	
 	## INTERNALS

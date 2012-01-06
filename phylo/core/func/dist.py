@@ -32,12 +32,19 @@ def rooted_subtree_history (rtree, nodes, inc_root=True):
 	"""
 	Calculate evolutionary history a la May-Nee or Faith.
 	
+	:Parameters:
+		rtree
+			a rooted tree
+		nodes
+			a subtree as defined 
+	
 	EH can only be calculated over a rooted tree since 
 	"""
 	## Preconditions:
 	assert (rtree.is_rooted), \
 		"evolutionary history can only be calculated over a rooted tree"
 	## Main::
+	stree = rtree.copy_rooted_subtree (nodes)
 	
 	## Postconditions & return:
 
