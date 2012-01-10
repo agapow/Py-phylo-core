@@ -477,7 +477,7 @@ class Tree (object):
 
 		"""
 		root = self.add_first_node (node_props)
-		self.reroot (root)
+		self.root = root
 		return root	
 
 	def insert_node_between (self, parent, child, node_props=None, distance=None,
@@ -637,10 +637,9 @@ class Tree (object):
 		See `iter_nodes` for further notes.
 		
 		"""
-		for n in self._nodes[node].keys():
+		for n in self._nodes[n].keys():
 			yield n
-
-
+	
 	
 	## INTERNALS
 	def _copy_nodes_and_branches (self):
@@ -707,22 +706,51 @@ class Tree (object):
 	
 	def _get_root (self):
 		return self._root
-		
+	
 	def _set_root (self, new_root):
 		## Preconditions:
 		assert (new_root is None) or (new_root in self._nodes), \
 			"can't set %s (%s) as tree root" % (type (new_root), new_root)
 		## Main:
 		self._root = new_root
+		self._reroot_tree()
 		
 	root = property (_get_root, _set_root)
 	
+	def _reroot_tree (self):
+		"""
+		'Rehang' a tree so the nodes correctly point to their parent.
+		
+		When a tree is rerooted, the parent-child relationship between
+		two nodes may reverse. This internal method should be called after
+		a rerooting to ensure every node is pointing at the right parent.
+		
+		"""
+		def rehang_children (tree, parent, node):
+			"""
+			Direct all children of a node to point to it. 
+			
+			We move out recursively from the new root, resetting nodes, and pass
+			the parent of this node to ensure it is not reset.
+			
+			"""
+			for c in tree.iter_adjacent_nodes (node):
+				if c is not parent:
+					indx = [x for x in tree.iter_adjacent_nodes (c)].index (n)
+					tree._nodes[c].rotate (-indx)
+					rehang_children (tree, node, c)
+			
+		rehang_children (self, None, self.root)
+	
+		
+		
 	def _create_node (self, props=None):
 		"""
 		Make a node and record supporting data.
 
 		Internal method: instantiates the node and makes a slot in the internal
 		node dictionary.
+		
 		"""
 		if (props is None):
 			new_node = Node()
@@ -738,6 +766,7 @@ class Tree (object):
 		Internal method: instantiates the branch, makes a slot in the internal
 		branch dictionary, and stores the branch in nodes dict for the nodes at
 		both ends.
+		
 		"""
 		if (props is None):
 			new_branch = Branch ()
