@@ -380,6 +380,16 @@ class Tree (object):
 		while nodes_to_process:
 			start = nodes_to_process.pop()
 			if start not in nodes_in_subtree:
+				found_path = False
+				paths_to_explore = [[start]]
+				while True:
+					new_paths = []
+					for p in paths_to_explore:
+						for x in self.iter_adjacent_nodes (p[-1]):
+							if x not in p:
+								if x in nodes_in_subtree:
+									
+									break
 		
 		## Return:
 		
