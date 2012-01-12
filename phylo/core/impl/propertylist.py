@@ -111,6 +111,9 @@ class PropertyList (object):
 		
 	def clear (self):
 		self._props.clear()
+		
+	def update (self, b):
+		self._props.update (b)
 
 
 

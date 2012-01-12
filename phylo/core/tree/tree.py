@@ -364,6 +364,27 @@ class Tree (object):
 					remaining_nodes.remove (curr_neighbour)
 		return all_nodes
 
+	def subtree (self, nodes):
+		"""
+		Given a list of nodes, construct a tree consisting of just those nodes.
+		
+		Note that this shares the actual nodes and branches with the original
+		tree. If you want to start messing with it, make a copy.
+		"""
+		## Main:
+		st = self.__class__ (dist_type=self._dist_type)
+		
+		nodes_to_process = nodes[1:]
+		nodes_in_subtree = nodes[0:1]
+		
+		while nodes_to_process:
+			start = nodes_to_process.pop()
+			if start not in nodes_in_subtree:
+		
+		## Return:
+		
+
+
 	def get_tips_subtended (self, center):
 		"""
 		How many tip nodes eventually derive from this node.
