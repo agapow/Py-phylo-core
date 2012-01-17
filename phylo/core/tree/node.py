@@ -33,29 +33,30 @@ class Node (PropertyList):
 	def __init__ (self, *args, **kwargs):
 		PropertyList.__init__ (self, *args, **kwargs)
 
-	def get_name (self, default=None):
+	def get_title (self, default=None):
 		"""
 		Returns the name or title of the node.
 		
 		For example::
 		
 			>>> n = Node()
-			>>> n.name() == None
+			>>> n.title == None
 			True
-			>>> n.name ('no name') == 'no name'
+			>>> n.title = 'no title'
+			>>> n.title == 'no title'
 			True
-			>>> n['name'] = 'foo'
-			>>> n.name() == 'foo'
+			>>> n['title'] = 'foo'
+			>>> n.title == 'foo'
 			True
 		
 		"""
-		return self.get ('name', default)
+		return self.get ('title', default)
 	
-	def set_name (self, val):
-		self['name'] = val
+	def set_title (self, val):
+		self['title'] = val
 	
-	name = property (get_name, set_name)
-	title = name
+	title = property (get_title, set_title)
+	name = title
 	
 	
 

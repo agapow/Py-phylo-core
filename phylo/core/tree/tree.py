@@ -86,8 +86,9 @@ class Tree (object):
 		"""
 		# destroy all references to nodes and branches
 		self._branches.clear()
-		for n in self._nodes:
-			n.clear()
+		# TODO: this is accidentally clearing the nodes not the hash of nodes
+		#for n in self._nodes:
+		#	n.clear()
 		self._nodes.clear()
 
 	def __copy__ (self):
@@ -374,24 +375,87 @@ class Tree (object):
 		## Main:
 		st = self.__class__ (dist_type=self._dist_type)
 		
-		nodes_to_process = nodes[1:]
+		# the "solution" - branches will link the nodes, but not in order
 		nodes_in_subtree = nodes[0:1]
+		branches_in_subtree = []
+		# the nodes still to be fouond or linked into the subtree
+		nodes_to_process = nodes[1:]
 		
-		while nodes_to_process:
-			start = nodes_to_process.pop()
-			if start not in nodes_in_subtree:
-				found_path = False
-				paths_to_explore = [[start]]
-				while True:
-					new_paths = []
-					for p in paths_to_explore:
-						for x in self.iter_adjacent_nodes (p[-1]):
-							if x not in p:
-								if x in nodes_in_subtree:
-									
-									break
+		def extend_path (t, p):
+			"""
+			Extend the node paths passed by a single node. 
+			
+			:Parameters:
+				t
+					a tree
+				path
+					a list of node that traverses the tree
+					
+			:Returns:
+				All paths the original can be grown into
+					
+			This extends the path by any means possible and returns a list of the
+			new paths. It drops those paths that are deadends.
+			"""
+			new_paths = []
+			last = p[-1]
+			if 1 < len (p):
+				next_to_last = p[-2]
+			else:
+				next_to_last = None
+			for next_node in t.iter_adjacent_nodes (last):
+				if next_node is next_to_last:
+					pass
+				else:
+					new_paths.append (p + [next_node])
+			return new_paths
+		
+		for start in nodes_to_process:
+			if start in nodes_in_subtree:
+				continue
+			
+			# the list of growing paths
+			paths_to_explore = [[start]]
+			connected = False
+			while connected is False:
+				new_paths = []
+				for o in paths_to_explore:
+					new_paths += extend_path (self, o)
+				for np in new_paths:
+					if np[-1] in nodes_in_subtree:
+						nodes_in_subtree.extend(np[:-1])
+						new_branches = [self._nodes[np[i]][np[i+1]]
+							 for i in range (len (np) - 1)]
+						branches_in_subtree.extend (new_branches)
+						connected = True
+						break
+				if connected:
+					break
+				paths_to_explore = new_paths
+				
+		
+		stree = self.__class__(dist_type=self._dist_type)
+		for n in nodes_in_subtree:
+			stree._nodes[n] = Odict()
+		for b in branches_in_subtree:
+			n1, n2 = self._branches[b]
+			stree._link_nodes (n1, b, n2)
 		
 		## Return:
+		return stree
+	
+	def calc_evol_history (self, nodes, rooted=True):
+		"""
+		Calculate evolutionary history in the Nee-May-Faith sense.
+		
+		If `rooted`, include the root. Note that the nodes do not have to be tips,
+		but can be internal.
+		"""
+		if rooted and self.root and (self.root not in nodes):
+			nodes += [self.root]
+		st = self.subtree (nodes)
+		x = sum ([b.distance for b in st.iter_branches()])
+		return x
 		
 
 
@@ -630,7 +694,7 @@ class Tree (object):
 
 		The order of iteration isn't guaranteed to be consistent.
 		"""
-		for b in self._branches:
+		for b in self._branches.iterkeys():
 			yield b
 	
 	# In relation to a given node
@@ -757,6 +821,7 @@ class Tree (object):
 		a rerooting to ensure every node is pointing at the right parent.
 		
 		"""
+		# TODO: should branches store direction information too?
 		def rehang_children (tree, parent, node):
 			"""
 			Direct all children of a node to point to it. 
@@ -802,7 +867,7 @@ class Tree (object):
 		if (props is None):
 			new_branch = Branch ()
 		else:
-			new_branch = Branch (branch_props)
+			new_branch = Branch (props)
 		if (distance is not None):
 			new_branch['distance'] = distance
 		self._branches[new_branch] = None
@@ -883,7 +948,7 @@ class Tree (object):
 		for n in self._nodes.keys():
 			print ("* dumpid %s: %s" % (n.get ('_dumpid'), n))
 			for c, b in self._nodes[n].iteritems():
-				print ("   - %s (branch %s, dist %s)" % (c.get ('_dumpid'), b.get ('_dumpid'), b.distance()))
+				print ("   - %s (branch %s, dist %s)" % (c.get ('_dumpid'), b.get ('_dumpid'), b.distance))
 		print ("Branches:")
 		for b, node_list in self._branches.iteritems():
 			print ("* dumpid %s: %s" % (b.get ('_dumpid'), b))

@@ -33,24 +33,29 @@ class Branch (PropertyList):
 	def __init__ (self, *args, **kwargs):
 		PropertyList.__init__ (self, *args, **kwargs)
 
-	def distance (self, default=None):
+	def get_distance (self, default=None):
 		"""
 		Returns the length of the branch.
 		
 		For example::
 		
 			>>> b = Branch()
-			>>> b.distance() == None
+			>>> b.distance == None
 			True
-			>>> b.distance (2.0) == 2.0
+			>>> b.set_distance (2.0)
+			>>> b.distance == 2.0
 			True
 			>>> b['distance'] = 1.0
-			>>> b.distance() == 1.0
+			>>> b.distance == 1.0
 			True
 		
 		"""
 		return self.get ('distance', default)
 
+	def set_distance (self, val):
+		self['distance'] = val
+		
+	distance = property (get_distance, set_distance)
 
 
 ### TEST & DEBUG ###
