@@ -1,4 +1,32 @@
 
+import itertools
+from tree import Tree
+
+
+def find_node (tree, pred, iter=None, from_node=None):
+	"""
+	Find the first node that matches the conditional function.
+	"""
+	for n in iter_find_nodes (tree, pred, iter, from_node):
+		return n
+	return None
+
+
+def find_all_nodes (tree, pred, iter=None, from_node=None):
+	return [n for n in iter_find_nodes (tree, pred, iter, from_node)]
+
+
+def iter_find_nodes (tree, pred, iter=None, from_node=None):
+	if iter == None:
+		iter = Tree.iter_nodes
+	if from_node == None:
+		iterable = iter (tree)
+	else:
+		iterable = iter (tree, from_node) 
+	for n in itertools.ifilter (pred, iterable):
+		yield n
+
+
 
 
 def iter_internal_nodes (self):
@@ -23,7 +51,7 @@ def iter_nodes_postorder (self, start, from_node=None):
 		raise StopIteration
 	for neighbour in self.iter_adjacent_nodes (start):
 		if (neighbour is not from_node):
-			for child in self.iter_nodes_postorder (neighbour, start):
+			for child in iter_nodes_postorder (self, neighbour, start):
 				yield child
 	yield start
 	
@@ -36,7 +64,7 @@ def iter_branches_postorder (self, start, from_node=None):
 		raise StopIteration
 	for neighbour in self.iter_adjacent_nodes (start):
 		if (neighbour is not from_node):
-			for child_br in self.iter_branches_postorder (neighbour, start):
+			for child_br in iter_branches_postorder (self, neighbour, start):
 				yield child_br
 		yield self.get_branch (start, neighbour)
 

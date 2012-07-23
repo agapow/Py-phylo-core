@@ -443,6 +443,21 @@ class Tree (object):
 		
 		## Return:
 		return stree
+
+	def mrca (self, nodes):
+		assert (self.is_rooted()), "only works on rooted tree"
+		assert (2 <= len (nodes)), "need a list of nodes"
+		# make a path from the first node to the root
+		root_path = []
+		curr_node = node[0]
+		while curr_node:
+			root_path.append (curr_node)
+			curr_node = self.get_parent (curr_node)
+			
+		
+
+		
+
 	
 	def calc_evol_history (self, nodes, rooted=True):
 		"""
@@ -456,6 +471,17 @@ class Tree (object):
 		st = self.subtree (nodes)
 		x = sum ([b.distance for b in st.iter_branches()])
 		return x
+		
+
+	def is_monophyletic (self, tips):
+		"""
+		Does the list of tips form a coherent subtree with no other tips included?
+		"""
+		st = self.subtree (tips)
+		for t in self.get_tips_subtended (st.root):
+			if t not in tips:
+				return False
+		return True
 		
 
 
@@ -474,8 +500,9 @@ class Tree (object):
 		## Preparations:
 
 		## Main:
+		from triters import iter_nodes_postorder
 		tips_subtended = {}
-		for node in self.iter_nodes_postorder (center):
+		for node in iter_nodes_postorder (self, center):
 			if (self.is_node_tip (node)):
 				tips_subtended[node] = 1
 			else:
@@ -688,6 +715,17 @@ class Tree (object):
 		for n in self._nodes.iterkeys():
 			yield n
 
+	def iter_tips (self):
+		"""
+		Traverse all tips in the tree.
+
+		The order of iteration isn't guaranteed to be consistent.
+		
+		"""
+		for n in self._nodes.iterkeys():
+			if self.is_node_tip (n):
+				yield n
+
 	def iter_branches (self):
 		"""
 		Traverse all branches in the tree.
@@ -696,6 +734,13 @@ class Tree (object):
 		"""
 		for b in self._branches.iterkeys():
 			yield b
+
+	def tips (self):
+		return [t for t in self.iter_tips()]
+
+	def nodes (self):
+		return self._nodes.keys()
+	
 	
 	# In relation to a given node
 	
