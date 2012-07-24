@@ -124,8 +124,8 @@ class Tree (object):
 		"""
 		Is a root defined for this tree?
 		"""
-		# TODO: if the rot is deleted, this should update
-		return (self._root is None)
+		# TODO: if the root is deleted, this should update
+		return (self._root is not None)
 		
 	def count_nodes (self):
 		"""
@@ -750,7 +750,11 @@ class Tree (object):
 		
 		Note: only sensible if tree is rooted.
 		"""
-		return self._nodes[node].keys()[0]
+		neighbours = self._nodes[n].keys()
+		if len(neighbours):
+			return self._nodes[n].keys()[0]
+		else:
+			return None
 	
 	def iter_child_nodes (self, n):
 		"""

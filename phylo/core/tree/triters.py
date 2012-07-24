@@ -1,7 +1,14 @@
 
+### IMPORTS
+
 import itertools
 from tree import Tree
 
+
+### IMPLEMENTATION ###
+
+### FIND
+# For locating nodes that match a given predicate
 
 def find_node (tree, pred, iter=None, from_node=None):
 	"""
@@ -13,10 +20,16 @@ def find_node (tree, pred, iter=None, from_node=None):
 
 
 def find_all_nodes (tree, pred, iter=None, from_node=None):
+	"""
+	Return a list of all nodes that match the conditional function.
+   """
 	return [n for n in iter_find_nodes (tree, pred, iter, from_node)]
 
 
 def iter_find_nodes (tree, pred, iter=None, from_node=None):
+	"""
+	Iterate over all nodes that match the conditional function.
+	"""
 	if iter == None:
 		iter = Tree.iter_nodes
 	if from_node == None:
@@ -27,7 +40,21 @@ def iter_find_nodes (tree, pred, iter=None, from_node=None):
 		yield n
 
 
+### MISC
 
+def iter_nodes_to_root (tree, from_node):
+	## Preconditions:
+	assert (tree.is_rooted()), "traversal requires root for destination"
+	## Main:
+	root = tree.root
+	curr_node = from_node
+	while curr_node != root:
+		yield curr_node
+		curr_node = tree.parent_node (curr_node)
+	yield root
+	
+
+### NODE TYPES
 
 def iter_internal_nodes (self):
 	"""
@@ -38,9 +65,12 @@ def iter_internal_nodes (self):
 	"""
 	return self.iter_nodes_if (lambda t, n: (1 < t.count_adjacent_nodes (n)))
 
+
 def iter_tip_nodes (self):
 	return self.iter_nodes_if (lambda t, n: (t.count_adjacent_nodes (n) == 1))
 
+
+### ORDER-BASED
 
 def iter_nodes_postorder (self, start, from_node=None):
 	"""
@@ -84,16 +114,18 @@ def iter_nodes_preorder (self, start, from_node=None):
 
 
 
-# rooted traversal
-def iter_nodes_subtree (self, start):
+### ROOTED (SUBTREE) TRAVERSAL
+
+def iter_nodes_subtree (tree, start):
 	"""
 	Traverse all nodes in a subtree.
 	
 	Note that no consistent order is guaranteed.
 	"""
-	return self.iter_nodes_postorder_subtree (self, start)	
+	return iter_nodes_subtree_postorder (tree, start)	
 
-def iter_subtree_postorder (self, start):
+
+def iter_nodes_subtree_postorder (self, start):
 	"""
 	Traverse nodes postorder (children / tips first) down from this node.
 	
@@ -148,7 +180,7 @@ def iter_subtree_preorder (self, start):
 	## Preconditions & preparation:
 	assert (self.is_rooted()), "method requires a rooted tree"
 	## Main:
-	parent = self.get_parent (start)
+	parent = self.parent_node (start)
 	# actually yield nodes
 	yield start
 	for child in self.iter_adjacent_nodes_except (start, parent):

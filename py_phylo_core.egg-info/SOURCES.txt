@@ -12,8 +12,10 @@ phylo/core/io/__init__.py
 phylo/core/io/baseio.py
 phylo/core/io/dialect.py
 phylo/core/tree/__init__.py
+phylo/core/tree/alg.py
 phylo/core/tree/branch.py
 phylo/core/tree/node.py
+phylo/core/tree/path.py
 phylo/core/tree/tree.py
 phylo/core/tree/triters.py
 py_phylo_core.egg-info/PKG-INFO
@@ -25,4 +27,8 @@ py_phylo_core.egg-info/not-zip-safe
 py_phylo_core.egg-info/requires.txt
 py_phylo_core.egg-info/top_level.txt
 tests/__init__.py
+tests/test_alg.py
+tests/test_triters.py
 tests/test_impl/__init__.py
+tests/test_tree/__init__.py
+tests/test_tree/test_tree.py

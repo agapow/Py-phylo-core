@@ -5,6 +5,13 @@ Placed in a seperate module for orthogonality and to allow multiple tree
 implementations.
 """
 
+### IMPORTS
+
+import triters
+
+
+### IMPLEMENTATION ###
+
 def mrca (tree, nodes):
 	"""
 	Find the most recent common ancestor of a set of nodes.
@@ -29,7 +36,7 @@ def mrca (tree, nodes):
 	# We do this by walking from the first node to the root. This gives an
 	# list of possible mrcas. Then we walk up from every other node and
 	# check where they intersect with that list.
-	root_path = [n for n in iter_nodes_to_root (tree, nodes[0])]
+	root_path = [n for n in triters.iter_nodes_to_root (tree, nodes[0])]
 	mrca_or_below = [root_path[0]]
 	possible_higher_mrca = root_path[1:]
 	root = possible_higher_mrca[-1]
@@ -41,7 +48,7 @@ def mrca (tree, nodes):
 			return root
 		# otherwise, walk up to root and see where it intersects previously
 		# explored nodes or the possible higher mrca list		
-		for p in iter_nodes_to_root (tree, n):
+		for p in triters.iter_nodes_to_root (tree, n):
 			if p in mrca_or_below:
 				# this node is below one we have already examined
 				break 
@@ -74,14 +81,33 @@ def calc_evol_history (self, nodes, rooted=True):
 	   return x
 
 
-def is_monophyletic (self, tips):
+def is_monophyletic (tree, nodes):
 	"""
-	Does the list of tips form a coherent subtree with no other tips
-	included?
+	Do these nodes form a coherent subtree with no other tips included?
+
+	:Params:
+		tree
+			a rooted tree
+		nodes
+			a list of nodes within that tree
+	
+	:Returns:
+		a boolean
+
+	Note that you can pass internal nodes in the list of nodes without causing
+	as error, but the answer will be False unless all tips descended from that
+	node are also included.
 	"""
-	st = self.subtree (tips)
-	for t in self.get_tips_subtended (st.root):
-	   if t not in tips:
+	# XXX: a cumbersome way to solve this, but it works
+	## Preconditions:
+	assert (tree.is_rooted()), "monophyley requires a root"
+	## Main:
+	# find the common ancestor of the tips
+	m = mrca (tree, nodes)
+	# for every tip descended from it, does it appear in the passed list?
+	iterable = iter_nodes_subtree (tree, m)
+	for t in itertools.ifilter (lambda n: tree.is_tip_node (n), iterable):
+	   if t not in nodes:
 	      return False
 	return True
 
