@@ -8,7 +8,7 @@ Tests for 'phylore.core.tree.triters', using nose.
 
 ### IMPORTS ###
 
-import phylo.core.tree.triters as triters
+import phylo.core.triters as triters
 
 
 ## CONSTANTS & DEFINES ###
