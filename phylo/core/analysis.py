@@ -208,5 +208,36 @@ def evol_history (tree, nodes, rooted=True):
 	   return x
 
 
+def total_distance (tree):
+	"""
+	Calculate the total distance encompassed by a tree.
+	
+	This simply iterates over the branches and sums distances.
+	"""
+	# TODO: addition functor
+	return sum ([b['distance'] for b in t.iter_branches()])
+
+
+def rooted_subtree_history (rtree, nodes, inc_root=True):
+	"""
+	Calculate evolutionary history a la May-Nee or Faith.
+	
+	:Parameters:
+		rtree
+			a rooted tree
+		nodes
+			a subtree as defined 
+	
+	EH can only be calculated over a rooted tree since 
+	"""
+	## Preconditions:
+	assert (rtree.is_rooted), \
+		"evolutionary history can only be calculated over a rooted tree"
+	## Main::
+	stree = rtree.copy_rooted_subtree (nodes)
+	
+	## Postconditions & return:
+
+
 ### END #######################################################################
 
