@@ -64,19 +64,19 @@ class TestAlg (object):
 	def test_is_monophyletic (self):
 		# for a single tip, by definition true
 		g_node = self.nodes['G']
-		assert (alg.is_monophyletic (tree, [g_node])), "single tip should be monophyletic"
+		assert (alg.is_monophyletic (self.tree, [g_node])), "single tip should be monophyletic"
 
 		# for a single internal node, answer is false
 		c_node = self.nodes['C']
-		assert (not alg.is_monophyletic (tree, [c_node])), "single internal should not be monophyletic"
+		assert (not alg.is_monophyletic (self.tree, [c_node])), "single internal should not be monophyletic"
 
 		# for all sibling tips, answer is true
 		f_node = self.nodes['F']
-		assert (alg.is_monophyletic (tree, [f_node, g_node])), "set of sibling tips should be monophyletic"
+		assert (alg.is_monophyletic (self.tree, [f_node, g_node])), "set of sibling tips should be monophyletic"
 
 		# for all in a subtree , answer is true
 		c_node = self.nodes['C']
-		assert (alg.is_monophyletic (tree, [c_node, f_node, g_node])), "all in subtree should be monophyletic"
+		assert (alg.is_monophyletic (self.tree, [c_node, f_node, g_node])), "all in subtree should be monophyletic"
 
 	def teardown(self):
 		pass

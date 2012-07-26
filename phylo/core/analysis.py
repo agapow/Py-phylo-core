@@ -169,6 +169,10 @@ def is_monophyletic (tree, nodes):
 	Note that you can pass internal nodes in the list of nodes without causing
 	as error, but the answer will be False unless all tips descended from that
 	node are also included.
+
+	(It is actually debatable how internal nodes should be treated in this
+	context. You could argue that passing an internal node is equivalent to
+	including all below it, so it may be more sensible  
 	"""
 	# XXX: a cumbersome way to solve this, but it works
 	## Preconditions:

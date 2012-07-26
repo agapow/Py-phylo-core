@@ -1,3 +1,27 @@
+"""
+Tree iterators and functions for searching within a tree.
+
+Tree iterators should follow the general form:
+
+	iter_object_[direction] (tree, start=None, stop=None)
+
+where:
+
+* iterators are named as ``iter_object[_direction]``, where ``object`` is the
+  type being returned by the iterator (e.g. ``node`` or ``branch``) and
+  ``direction`` indicates what order the iteration takes place in (e.g.
+  ``postorder``, ``to_root``).
+
+* ``start`` is where traversal begins, i.e. the first value returned. If
+  ``None`` is passed, a logical starting point is selected, usually the root.
+
+* ``stop`` is where traversal halts. If given, this value will not be returned,
+  i.e. iteration stops just before the value, in line with other Python
+  iterators. If ``None`` is passed, traversal continues until the iterator is
+  exhausted. 
+
+"""
+
 
 ### IMPORTS
 
@@ -10,44 +34,44 @@ from tree import Tree
 ### FIND
 # For locating nodes that match a given predicate
 
-def find_node (tree, pred, iter=None, from_node=None):
+def find_node (tree, pred, iter=None, start=None, stop=None):
 	"""
 	Find the first node that matches the conditional function.
 	"""
-	for n in iter_find_nodes (tree, pred, iter, from_node):
+	for n in iter_find_nodes (tree, pred, iter, start=start, stop=stop):
 		return n
 	return None
 
 
-def find_all_nodes (tree, pred, iter=None, from_node=None):
+def find_all_nodes (tree, pred, iter=None, start=None, stop=None):
 	"""
 	Return a list of all nodes that match the conditional function.
    """
-	return [n for n in iter_find_nodes (tree, pred, iter, from_node)]
+	return [n for n in iter_find_nodes (tree, pred, iter, start=start, stop=stop)]
 
 
-def iter_find_nodes (tree, pred, iter=None, from_node=None):
+def iter_find_nodes (tree, pred, iter=None, start=None, stop=None):
 	"""
 	Iterate over all nodes that match the conditional function.
 	"""
 	if iter == None:
 		iter = Tree.iter_nodes
-	if from_node == None:
+	if start == None:
 		iterable = iter (tree)
 	else:
-		iterable = iter (tree, from_node) 
+		iterable = iter (tree, start=start, stop=stop) 
 	for n in itertools.ifilter (pred, iterable):
 		yield n
 
 
 ### MISC
 
-def iter_nodes_to_root (tree, from_node):
+def iter_nodes_to_root (tree, start):
 	## Preconditions:
 	assert (tree.is_rooted()), "traversal requires root for destination"
 	## Main:
 	root = tree.root
-	curr_node = from_node
+	curr_node = start
 	while curr_node != root:
 		yield curr_node
 		curr_node = tree.parent_node (curr_node)
@@ -71,46 +95,38 @@ def iter_tip_nodes (self):
 
 
 ### ORDER-BASED
+# XXX: currently restrict ordered traversal to rooted trees. Unclear if
+# it makes sense in other contexts or how it can be consistently
+# implemented
+# XXX: do we need order branch traversal?
 
-def iter_nodes_postorder (self, start, from_node=None):
+def iter_nodes_postorder (self, start=None):
 	"""
 	Do a postorder (children / tips first) traversal of the nodes.
 	"""
-	# TODO: use `_iter_adjacent_nodes_except`
-	if (start is None):
-		raise StopIteration
-	for neighbour in self.iter_adjacent_nodes (start):
-		if (neighbour is not from_node):
-			for child in iter_nodes_postorder (self, neighbour, start):
-				yield child
+	## Preconditions & preparation:
+	assert (tree.is_rooted()), "traversal requires rooted tree"
+	start = start or tree.root
+	## Main:
+	for neighbour in self.iter_child_nodes (start):
+		for child in iter_nodes_postorder (self, neighbour, start):
+			yield child
 	yield start
+
 	
-def iter_branches_postorder (self, start, from_node=None):
-	"""
-	Do a postorder (children / tips first) traversal of the branches.
-	"""
-	# TODO: use `_iter_adjacent_nodes_except`
-	if (start is None):
-		raise StopIteration
-	for neighbour in self.iter_adjacent_nodes (start):
-		if (neighbour is not from_node):
-			for child_br in iter_branches_postorder (self, neighbour, start):
-				yield child_br
-		yield self.get_branch (start, neighbour)
 
-def iter_nodes_preorder (self, start, from_node=None):
+def iter_nodes_preorder (self, start=None):
 	"""
 	Do a postorder (children / tips first) traversal of the nodes.
 	"""
-	# TODO: use `_iter_adjacent_nodes_except`
-	# TODO: why did I do this? See below.
-	if (start is None):
-		raise StopIteration
+	## Preconditions & preparation:
+	assert (tree.is_rooted()), "traversal requires rooted tree"
+	start = start or tree.root
+	## Main:
 	yield start
-	for neighbour in self.iter_adjacent_nodes (start):
-		if (neighbour is not from_node):
-			for child in self.iter_nodes_preorder (neighbour, start):
-				yield child
+	for neighbour in self.iter_child_nodes (start):
+		for child in self.iter_nodes_preorder (neighbour, start):
+			yield child
 
 
 
