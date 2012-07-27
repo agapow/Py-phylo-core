@@ -8,6 +8,12 @@ the following features:
 
 * Attaching abitray 
 
+.. module:: phylo.core
+   :platform: all
+   :synopsis: Representing, manipulating and analysing phylogenetic trees.
+
+.. moduleauthor:: Paul Agapow <pma@agapow.net>
+
 
 
 """

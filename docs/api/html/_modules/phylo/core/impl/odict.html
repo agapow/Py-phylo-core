@@ -1,0 +1,434 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>phylo.core.impl.odict &mdash; phylo.core 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="top" title="phylo.core 2.0 documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for phylo.core.impl.odict</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A simple ordered dictionary.</span>
+
+<span class="sd">Within phylo.core this is used to hold node-node relationships, so that a</span>
+<span class="sd">consistent order of branches can be kept and manipulated. More complex</span>
+<span class="sd">ordered dictionary implementations are possible and available (e.g.</span>
+<span class="sd">[vs_odict]__), but this will do for our purposes. The version that crops up in</span>
+<span class="sd">Python 2.7 is unsuitable as we need support for Jython and lesser versions.</span>
+
+<span class="sd">.. [vs_odict] &quot;Odict&quot;. At &lt;http://www.voidspace.org.uk/python/odict.html&gt;.</span>
+
+<span class="sd">.. &quot;Another Odict&quot;. At &lt;http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/498195&gt;.</span>
+
+<span class="sd">.. &quot;Sequential dictionary&quot;. At &lt;http://home.arcor.de/wolfgang.grafen/Python/Modules/seqdict/Seqdict.html&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># TODO: can we default to the python built-in one for 2.7+?</span>
+<span class="c"># TODO: adapt to API of Python 2.7+ OrderedDict. Drop-in replacement available</span>
+<span class="c">#	http://code.activestate.com/recipes/576693/</span>
+
+
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;restructuredtext en&#39;</span>
+
+
+<span class="c">### IMPORTS ###</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+	<span class="s">&#39;Odict&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="c">### IMPLEMENTATION ###</span>
+
+<div class="viewcode-block" id="Odict"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.odict.Odict">[docs]</a><span class="k">class</span> <span class="nc">Odict</span> <span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	A simple ordered dictionary.</span>
+<span class="sd">	</span>
+<span class="sd">	This allows keys and their accompanying values to be accessed in a</span>
+<span class="sd">	consistent order as items are added to a dictionary, rather than an</span>
+<span class="sd">	indeterminate one based on dictionary internals. By default, items are kept</span>
+<span class="sd">	in the order they are added. This order may be manipulated and sorted. </span>
+<span class="sd">	</span>
+<span class="sd">	For example::</span>
+<span class="sd">	</span>
+<span class="sd">		&gt;&gt;&gt; od = Odict()</span>
+<span class="sd">		&gt;&gt;&gt; od[&#39;c&#39;] = &#39;2&#39;; od[&#39;b&#39;] = &#39;1&#39;; od[&#39;a&#39;] = &#39;3&#39;</span>
+<span class="sd">		&gt;&gt;&gt; &#39;&#39;.join (od.keys())</span>
+<span class="sd">		&#39;cba&#39;</span>
+<span class="sd">		&gt;&gt;&gt; &#39;&#39;.join (od.ordered_keys())</span>
+<span class="sd">		&#39;cba&#39;</span>
+<span class="sd">		&gt;&gt;&gt; od.items()</span>
+<span class="sd">		[(&#39;c&#39;, &#39;2&#39;), (&#39;b&#39;, &#39;1&#39;), (&#39;a&#39;, &#39;3&#39;)]</span>
+<span class="sd">	</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	
+	<span class="c">## LIFECYCLE:</span>
+	<span class="k">def</span> <span class="nf">__init__</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		C&#39;tor for dictionary.</span>
+<span class="sd">		</span>
+<span class="sd">		We don&#39;t allow content initialisation in construction, because it</span>
+<span class="sd">		is difficult to know what ordering due to the problem of ascertaining</span>
+<span class="sd">		what order those items should be in. (If initialised from a mapping</span>
+<span class="sd">		or keyword-pairs, the order is essentially arbitrary.)</span>
+<span class="sd">		</span>
+<span class="sd">		For example::</span>
+<span class="sd">		</span>
+<span class="sd">			&gt;&gt;&gt; od1 = Odict()</span>
+<span class="sd">			&gt;&gt;&gt; od2 = Odict (a=1, b=2)</span>
+<span class="sd">			Traceback (most recent call last):</span>
+<span class="sd">			...</span>
+<span class="sd">			TypeError: __init__() got an unexpected keyword argument &#39;a&#39;</span>
+<span class="sd">			&gt;&gt;&gt; od2 = Odict({&#39;a&#39;: 1, &#39;b&#39;: 2})</span>
+<span class="sd">			Traceback (most recent call last):</span>
+<span class="sd">			...</span>
+<span class="sd">			TypeError: __init__() takes exactly 1 argument (2 given)</span>
+<span class="sd">			</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># NOTE: can&#39;t use a set for the indices as they are unordered</span>
+		<span class="nb">dict</span><span class="o">.</span><span class="n">__init__</span> <span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_indices</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
+		
+	<span class="c">## ACCESSORS:</span>
+<div class="viewcode-block" id="Odict.ordered_keys"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.odict.Odict.ordered_keys">[docs]</a>	<span class="k">def</span> <span class="nf">ordered_keys</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return the dictionary keys in order.</span>
+<span class="sd">		</span>
+<span class="sd">		For example::</span>
+<span class="sd">		</span>
+<span class="sd">			&gt;&gt;&gt; od = Odict()</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;c&#39;] = 2; od[&#39;b&#39;] = 1; od[&#39;a&#39;] = 3</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_keys()</span>
+<span class="sd">			[&#39;c&#39;, &#39;b&#39;, &#39;a&#39;]</span>
+<span class="sd">			</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="nb">list</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">)</span>
+	</div>
+	<span class="n">keys</span> <span class="o">=</span> <span class="n">ordered_keys</span>
+		
+<div class="viewcode-block" id="Odict.ordered_values"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.odict.Odict.ordered_values">[docs]</a>	<span class="k">def</span> <span class="nf">ordered_values</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return the dictionary keys in (key) order.</span>
+
+<span class="sd">		For example::</span>
+<span class="sd">		</span>
+<span class="sd">			&gt;&gt;&gt; od = Odict()</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;c&#39;] = 2; od[&#39;b&#39;] = 1; od[&#39;a&#39;] = 3</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_values()</span>
+<span class="sd">			[2, 1, 3]</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">]</span>
+		</div>
+	<span class="n">values</span> <span class="o">=</span> <span class="n">ordered_values</span>
+	
+<div class="viewcode-block" id="Odict.ordered_items"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.odict.Odict.ordered_items">[docs]</a>	<span class="k">def</span> <span class="nf">ordered_items</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return the dictionary items in order.</span>
+
+<span class="sd">		For example::</span>
+<span class="sd">		</span>
+<span class="sd">			&gt;&gt;&gt; od = Odict()</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;c&#39;] = 2; od[&#39;b&#39;] = 1; od[&#39;a&#39;] = 3</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_items()</span>
+<span class="sd">			[(&#39;c&#39;, 2), (&#39;b&#39;, 1), (&#39;a&#39;, 3)]</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">]</span>
+	</div>
+	<span class="n">items</span> <span class="o">=</span> <span class="n">ordered_items</span>
+	
+<div class="viewcode-block" id="Odict.ordered_iterkeys"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.odict.Odict.ordered_iterkeys">[docs]</a>	<span class="k">def</span> <span class="nf">ordered_iterkeys</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return an iterator over the dictionary keys in order.</span>
+
+<span class="sd">		For example::</span>
+
+<span class="sd">			&gt;&gt;&gt; od = Odict()</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;c&#39;] = 2; od[&#39;b&#39;] = 1; od[&#39;a&#39;] = 3</span>
+<span class="sd">			&gt;&gt;&gt; [x for x in od.ordered_iterkeys()]</span>
+<span class="sd">			[&#39;c&#39;, &#39;b&#39;, &#39;a&#39;]</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">:</span>
+			<span class="k">yield</span> <span class="n">k</span>
+	</div>
+	<span class="n">iterkeys</span> <span class="o">=</span> <span class="n">ordered_iterkeys</span>
+	
+<div class="viewcode-block" id="Odict.ordered_itervalues"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.odict.Odict.ordered_itervalues">[docs]</a>	<span class="k">def</span> <span class="nf">ordered_itervalues</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return an iterator over the dictionary values in order.</span>
+
+<span class="sd">		For example::</span>
+
+<span class="sd">			&gt;&gt;&gt; od = Odict()</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;c&#39;] = 2; od[&#39;b&#39;] = 1; od[&#39;a&#39;] = 3</span>
+<span class="sd">			&gt;&gt;&gt; [x for x in od.ordered_itervalues()]</span>
+<span class="sd">			[2, 1, 3]</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">:</span>
+			<span class="k">yield</span> <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+	</div>
+	<span class="n">itervalues</span> <span class="o">=</span> <span class="n">ordered_itervalues</span>
+	
+<div class="viewcode-block" id="Odict.ordered_iteritems"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.odict.Odict.ordered_iteritems">[docs]</a>	<span class="k">def</span> <span class="nf">ordered_iteritems</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return an iterator over the dictionary items in order.</span>
+<span class="sd">		</span>
+<span class="sd">		For example::</span>
+<span class="sd">		</span>
+<span class="sd">			&gt;&gt;&gt; od = Odict()</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;c&#39;] = 2; od[&#39;b&#39;] = 1; od[&#39;a&#39;] = 3</span>
+<span class="sd">			&gt;&gt;&gt; [x for x in od.ordered_iteritems()]</span>
+<span class="sd">			[(&#39;c&#39;, 2), (&#39;b&#39;, 1), (&#39;a&#39;, 3)]</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">:</span>
+			<span class="k">yield</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+	</div>
+	<span class="n">iteritems</span> <span class="o">=</span> <span class="n">ordered_iteritems</span>
+	
+	<span class="c">## MUTATORS::</span>
+	<span class="k">def</span> <span class="nf">__setitem__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Set or update the value of an item in the dictionary.</span>
+<span class="sd">		</span>
+<span class="sd">		This also updates the item order if need be.</span>
+<span class="sd">		</span>
+<span class="sd">		For example::</span>
+<span class="sd">		</span>
+<span class="sd">			&gt;&gt;&gt; od = Odict()</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;c&#39;] = 2</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_keys()</span>
+<span class="sd">			[&#39;c&#39;]</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;b&#39;] = 1</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_keys()</span>
+<span class="sd">			[&#39;c&#39;, &#39;b&#39;]</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;a&#39;] = 3</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_keys()</span>
+<span class="sd">			[&#39;c&#39;, &#39;b&#39;, &#39;a&#39;]</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="nb">dict</span><span class="o">.</span><span class="n">__setitem__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="o">.</span><span class="n">append</span> <span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">__delitem__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Delete an item in the dictionary.</span>
+<span class="sd">		</span>
+<span class="sd">		This also removes the item from the order.</span>
+<span class="sd">		</span>
+<span class="sd">		For example::</span>
+<span class="sd">		</span>
+<span class="sd">			&gt;&gt;&gt; od = Odict()</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;c&#39;] = 2; od[&#39;b&#39;] = 1; od[&#39;a&#39;] = 3</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_keys()</span>
+<span class="sd">			[&#39;c&#39;, &#39;b&#39;, &#39;a&#39;]</span>
+<span class="sd">			&gt;&gt;&gt; del od[&#39;c&#39;]</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_keys()</span>
+<span class="sd">			[&#39;b&#39;, &#39;a&#39;]</span>
+<span class="sd">			&gt;&gt;&gt; del od[&#39;a&#39;]</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_keys()</span>
+<span class="sd">			[&#39;b&#39;]</span>
+<span class="sd">			</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="nb">dict</span><span class="o">.</span><span class="n">__delitem__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="o">.</span><span class="n">remove</span> <span class="p">(</span><span class="n">key</span><span class="p">)</span>
+		
+<div class="viewcode-block" id="Odict.order_by_keys"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.odict.Odict.order_by_keys">[docs]</a>	<span class="k">def</span> <span class="nf">order_by_keys</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Change the order of keys (and thus items).</span>
+<span class="sd">		</span>
+<span class="sd">		The items are reordered, according to the order of the keys passed in.</span>
+<span class="sd">		Note that these keys must have the same number and identity as the old</span>
+<span class="sd">		keys, just in a (potentially) different order.</span>
+<span class="sd">		</span>
+<span class="sd">		For example::</span>
+<span class="sd">		</span>
+<span class="sd">			&gt;&gt;&gt; od = Odict()</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;c&#39;] = 2; od[&#39;b&#39;] = 1; od[&#39;a&#39;] = 3</span>
+<span class="sd">			&gt;&gt;&gt; od.order_by_keys ([&#39;a&#39;, &#39;b&#39;, &#39;c&#39;])</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_items()</span>
+<span class="sd">			[(&#39;a&#39;, 3), (&#39;b&#39;, 1), (&#39;c&#39;, 2)]</span>
+<span class="sd">			&gt;&gt;&gt; od.order_by_keys ([&#39;a&#39;, &#39;b&#39;, &#39;c&#39;])</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_items()</span>
+<span class="sd">			[(&#39;a&#39;, 3), (&#39;b&#39;, 1), (&#39;c&#39;, 2)]</span>
+<span class="sd">			&gt;&gt;&gt; od.order_by_keys ([&#39;d&#39;, &#39;a&#39;, &#39;b&#39;])</span>
+<span class="sd">			Traceback (most recent call last):</span>
+<span class="sd">			...</span>
+<span class="sd">			AssertionError: new keys are different to old keys</span>
+<span class="sd">			&gt;&gt;&gt; od.order_by_keys ([&#39;b&#39;, &#39;a&#39;])</span>
+<span class="sd">			Traceback (most recent call last):</span>
+<span class="sd">			...</span>
+<span class="sd">			AssertionError: new keys are different to old keys</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: do I really need this?</span>
+		
+		<span class="c">## Preconditions:</span>
+		<span class="n">new_keys</span> <span class="o">=</span> <span class="nb">list</span> <span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="nb">sorted</span> <span class="p">(</span><span class="n">new_keys</span><span class="p">)</span> <span class="o">==</span> <span class="nb">sorted</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">)),</span> \
+			<span class="s">&quot;new keys are different to old keys&quot;</span>
+		<span class="c">## Main:</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_indices</span> <span class="o">=</span> <span class="n">new_keys</span>
+	</div>
+<div class="viewcode-block" id="Odict.rotate_order"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.odict.Odict.rotate_order">[docs]</a>	<span class="k">def</span> <span class="nf">rotate_order</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Change the ordering by shifting, items from one end moving to the other.</span>
+<span class="sd">		</span>
+<span class="sd">		:Parameters:</span>
+<span class="sd">			shift integer</span>
+<span class="sd">				Positive shifts move the sequence right, negative to the left.</span>
+<span class="sd">		</span>
+<span class="sd">		For example::</span>
+<span class="sd">		</span>
+<span class="sd">			&gt;&gt;&gt; od = Odict()</span>
+<span class="sd">			&gt;&gt;&gt; od[&#39;c&#39;] = 2; od[&#39;b&#39;] = 1; od[&#39;a&#39;] = 3</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_keys()</span>
+<span class="sd">			[&#39;c&#39;, &#39;b&#39;, &#39;a&#39;]</span>
+<span class="sd">			&gt;&gt;&gt; od.rotate_order()</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_keys()</span>
+<span class="sd">			[&#39;a&#39;, &#39;c&#39;, &#39;b&#39;]</span>
+<span class="sd">			&gt;&gt;&gt; od.rotate_order (-1)</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_keys()</span>
+<span class="sd">			[&#39;c&#39;, &#39;b&#39;, &#39;a&#39;]</span>
+<span class="sd">			&gt;&gt;&gt; od.rotate_order (4)</span>
+<span class="sd">			&gt;&gt;&gt; od.ordered_keys()</span>
+<span class="sd">			[&#39;a&#39;, &#39;c&#39;, &#39;b&#39;]</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c">## Preconditions &amp; preparation:</span>
+		<span class="c">#shift = shift % len (self._indices)</span>
+		<span class="c">## Main:</span>
+		<span class="c">#if shift:</span>
+		<span class="c">#	self._indices = self._indices[-shift:] + self._indices[:-shift]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span>
+		
+		</div>
+<div class="viewcode-block" id="Odict.popitem"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.odict.Odict.popitem">[docs]</a>	<span class="k">def</span> <span class="nf">popitem</span> <span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Remove and return a (key, value) pair. </span>
+<span class="sd">		</span>
+<span class="sd">		The pairs are returned in LIFO order if last is true or FIFO order if</span>
+<span class="sd">		false.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="n">last</span><span class="p">:</span>
+			<span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="o">.</span><span class="n">popLeft</span><span class="p">()</span>
+		<span class="k">return</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">dict</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="Odict.move_to_end"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.odict.Odict.move_to_end">[docs]</a>	<span class="k">def</span> <span class="nf">move_to_end</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="o">.</span><span class="n">remove</span> <span class="p">(</span><span class="n">key</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">last</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">appendLeft</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+			
+
+<span class="c">### TEST &amp; DEBUG ###</span>
+</div></div>
+<span class="k">def</span> <span class="nf">_doctest</span> <span class="p">():</span>
+	<span class="kn">import</span> <span class="nn">doctest</span>
+	<span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span> <span class="p">()</span>
+
+
+<span class="c">### MAIN ###</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+	<span class="n">_doctest</span><span class="p">()</span>
+
+
+<span class="c">### END ########################################################################</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Paul Agapow.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

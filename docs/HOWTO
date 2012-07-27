@@ -1,0 +1,65 @@
+Documenting a Python module with Sphinx
+
+
+Assumptions
+
+* You're using Sphinx 1.1 or better
+
+* Your module is laid out in the traditional way (setup.py, docs, tests, etc.)
+
+Steps
+
+Create the project and working directories with:
+
+	% sphinx-quickstart
+
+Answer the questions with:
+
+	root path: your document directory, where the working dirs and output will
+appear
+	seperate source of build: yes
+	Add sphinc extensions: intersphinx
+	create makefile: yes
+
+Cd into the root directory. 
+
+Edit the Makefile if needed:
+
+	PAPER: set to a4
+	BUILDIR: rename to something other than build if required (also rename dir)
+
+Generate the api documentation
+
+	% sphinx-apidoc -f -H phylo.core -o source ..
+
+This will:
+
+	-f: overwrite any existing files
+	-H foo: names the module as foo
+	-o source: produce output in the source directory
+	..: search teh directory above for modules
+
+Note that this will also read in the tests and setup packaages. Unclear on how
+can be avoid.
+
+Edit source/index.rst to include:
+
+   11 .. toctree::
+   12    :maxdepth: 2
+   13 
+   14    modules.rst
+   15    phylo.core.rst
+   16    phylo.core.io
+   17 
+   18 
+
+  Or whatever modules you want included
+
+
+  SOurce/conf.py can eb editted to show
+
+  	version
+  	project title
+  	generate module index
+
+

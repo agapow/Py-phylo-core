@@ -1,0 +1,310 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>phylo.core.triters &mdash; phylo.core 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="phylo.core 2.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for phylo.core.triters</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Tree iterators and functions for searching within a tree.</span>
+
+<span class="sd">Tree iterators should follow the general form:</span>
+
+<span class="sd">	iter_object_[direction] (tree, start=None, stop=None)</span>
+
+<span class="sd">where:</span>
+
+<span class="sd">* iterators are named as ``iter_object[_direction]``, where ``object`` is the</span>
+<span class="sd">  type being returned by the iterator (e.g. ``node`` or ``branch``) and</span>
+<span class="sd">  ``direction`` indicates what order the iteration takes place in (e.g.</span>
+<span class="sd">  ``postorder``, ``to_root``).</span>
+
+<span class="sd">* ``start`` is where traversal begins, i.e. the first value returned. If</span>
+<span class="sd">  ``None`` is passed, a logical starting point is selected, usually the root.</span>
+
+<span class="sd">* ``stop`` is where traversal halts. If given, this value will not be returned,</span>
+<span class="sd">  i.e. iteration stops just before the value, in line with other Python</span>
+<span class="sd">  iterators. If ``None`` is passed, traversal continues until the iterator is</span>
+<span class="sd">  exhausted. </span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="c">### IMPORTS</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">tree</span> <span class="kn">import</span> <span class="n">Tree</span>
+
+
+<span class="c">### IMPLEMENTATION ###</span>
+
+<span class="c">### FIND</span>
+<span class="c"># For locating nodes that match a given predicate</span>
+
+<div class="viewcode-block" id="find_node"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.triters.find_node">[docs]</a><span class="k">def</span> <span class="nf">find_node</span> <span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="nb">iter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Find the first node that matches the conditional function.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">iter_find_nodes</span> <span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="nb">iter</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">n</span>
+	<span class="k">return</span> <span class="bp">None</span>
+
+</div>
+<div class="viewcode-block" id="find_all_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.triters.find_all_nodes">[docs]</a><span class="k">def</span> <span class="nf">find_all_nodes</span> <span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="nb">iter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Return a list of all nodes that match the conditional function.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+	<span class="k">return</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">iter_find_nodes</span> <span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="nb">iter</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">)]</span>
+
+</div>
+<div class="viewcode-block" id="iter_find_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.triters.iter_find_nodes">[docs]</a><span class="k">def</span> <span class="nf">iter_find_nodes</span> <span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="nb">iter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Iterate over all nodes that match the conditional function.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">if</span> <span class="nb">iter</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+		<span class="nb">iter</span> <span class="o">=</span> <span class="n">Tree</span><span class="o">.</span><span class="n">iter_nodes</span>
+	<span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+		<span class="n">iterable</span> <span class="o">=</span> <span class="nb">iter</span> <span class="p">(</span><span class="n">tree</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">iterable</span> <span class="o">=</span> <span class="nb">iter</span> <span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">)</span> 
+	<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">ifilter</span> <span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+		<span class="k">yield</span> <span class="n">n</span>
+
+
+<span class="c">### MISC</span>
+</div>
+<div class="viewcode-block" id="iter_nodes_to_root"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.triters.iter_nodes_to_root">[docs]</a><span class="k">def</span> <span class="nf">iter_nodes_to_root</span> <span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">start</span><span class="p">):</span>
+	<span class="c">## Preconditions:</span>
+	<span class="k">assert</span> <span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">is_rooted</span><span class="p">()),</span> <span class="s">&quot;traversal requires root for destination&quot;</span>
+	<span class="c">## Main:</span>
+	<span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">root</span>
+	<span class="n">curr_node</span> <span class="o">=</span> <span class="n">start</span>
+	<span class="k">while</span> <span class="n">curr_node</span> <span class="o">!=</span> <span class="n">root</span><span class="p">:</span>
+		<span class="k">yield</span> <span class="n">curr_node</span>
+		<span class="n">curr_node</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">parent_node</span> <span class="p">(</span><span class="n">curr_node</span><span class="p">)</span>
+	<span class="k">yield</span> <span class="n">root</span>
+	
+
+<span class="c">### NODE TYPES</span>
+</div>
+<div class="viewcode-block" id="iter_internal_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.triters.iter_internal_nodes">[docs]</a><span class="k">def</span> <span class="nf">iter_internal_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Traverse the internal nodes of the tree.</span>
+<span class="sd">	</span>
+<span class="sd">	The order of iteration isn&#39;t guaranteed to be consistent. Notice that in</span>
+<span class="sd">	rooted trees, the root is included unless it is a singleton.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_nodes_if</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="n">t</span><span class="o">.</span><span class="n">count_adjacent_nodes</span> <span class="p">(</span><span class="n">n</span><span class="p">)))</span>
+
+</div>
+<div class="viewcode-block" id="iter_tip_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.triters.iter_tip_nodes">[docs]</a><span class="k">def</span> <span class="nf">iter_tip_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+	<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_nodes_if</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">count_adjacent_nodes</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">))</span>
+
+
+<span class="c">### ORDER-BASED</span>
+<span class="c"># XXX: currently restrict ordered traversal to rooted trees. Unclear if</span>
+<span class="c"># it makes sense in other contexts or how it can be consistently</span>
+<span class="c"># implemented</span>
+<span class="c"># XXX: do we need order branch traversal?</span>
+</div>
+<div class="viewcode-block" id="iter_nodes_postorder"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.triters.iter_nodes_postorder">[docs]</a><span class="k">def</span> <span class="nf">iter_nodes_postorder</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Do a postorder (children / tips first) traversal of the nodes.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="c">## Preconditions &amp; preparation:</span>
+	<span class="k">assert</span> <span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">is_rooted</span><span class="p">()),</span> <span class="s">&quot;traversal requires rooted tree&quot;</span>
+	<span class="n">start</span> <span class="o">=</span> <span class="n">start</span> <span class="ow">or</span> <span class="n">tree</span><span class="o">.</span><span class="n">root</span>
+	<span class="c">## Main:</span>
+	<span class="k">for</span> <span class="n">neighbour</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_child_nodes</span> <span class="p">(</span><span class="n">start</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">iter_nodes_postorder</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neighbour</span><span class="p">,</span> <span class="n">start</span><span class="p">):</span>
+			<span class="k">yield</span> <span class="n">child</span>
+	<span class="k">yield</span> <span class="n">start</span>
+
+	
+</div>
+<div class="viewcode-block" id="iter_nodes_preorder"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.triters.iter_nodes_preorder">[docs]</a><span class="k">def</span> <span class="nf">iter_nodes_preorder</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Do a postorder (children / tips first) traversal of the nodes.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="c">## Preconditions &amp; preparation:</span>
+	<span class="k">assert</span> <span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">is_rooted</span><span class="p">()),</span> <span class="s">&quot;traversal requires rooted tree&quot;</span>
+	<span class="n">start</span> <span class="o">=</span> <span class="n">start</span> <span class="ow">or</span> <span class="n">tree</span><span class="o">.</span><span class="n">root</span>
+	<span class="c">## Main:</span>
+	<span class="k">yield</span> <span class="n">start</span>
+	<span class="k">for</span> <span class="n">neighbour</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_child_nodes</span> <span class="p">(</span><span class="n">start</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_nodes_preorder</span> <span class="p">(</span><span class="n">neighbour</span><span class="p">,</span> <span class="n">start</span><span class="p">):</span>
+			<span class="k">yield</span> <span class="n">child</span>
+
+
+
+<span class="c">### ROOTED (SUBTREE) TRAVERSAL</span>
+</div>
+<div class="viewcode-block" id="iter_nodes_subtree"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.triters.iter_nodes_subtree">[docs]</a><span class="k">def</span> <span class="nf">iter_nodes_subtree</span> <span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">start</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Traverse all nodes in a subtree.</span>
+<span class="sd">	</span>
+<span class="sd">	Note that no consistent order is guaranteed.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">return</span> <span class="n">iter_nodes_subtree_postorder</span> <span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span>	
+
+</div>
+<div class="viewcode-block" id="iter_nodes_subtree_postorder"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.triters.iter_nodes_subtree_postorder">[docs]</a><span class="k">def</span> <span class="nf">iter_nodes_subtree_postorder</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Traverse nodes postorder (children / tips first) down from this node.</span>
+<span class="sd">	</span>
+<span class="sd">		:Parameters:</span>
+<span class="sd">			start</span>
+<span class="sd">				The node to start traversal from.</span>
+<span class="sd">				</span>
+<span class="sd">		:Returns:</span>
+<span class="sd">			A tree node.</span>
+<span class="sd">	</span>
+<span class="sd">	Notice that traversal includes - and finishes with - the start node, at</span>
+<span class="sd">	the head of the tree.</span>
+<span class="sd">	</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="c">## Preconditions &amp; preparation:</span>
+	<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_rooted</span><span class="p">()),</span> <span class="s">&quot;method requires a rooted tree&quot;</span>
+	<span class="c">## Main:</span>
+	<span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parent</span> <span class="p">(</span><span class="n">start</span><span class="p">)</span>
+	<span class="c"># actually yield nodes</span>
+	<span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_adjacent_nodes_except</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">curr_node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_nodes_postorder_subtree</span> <span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+			<span class="k">yield</span> <span class="n">curr_node</span>
+	<span class="k">yield</span> <span class="n">start</span>
+	</div>
+<span class="k">def</span> <span class="nf">_iter_subtree_postorder</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Traverse the nodes postorder within a subtree.</span>
+<span class="sd">	</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="c"># actually yield nodes</span>
+	<span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_adjacent_nodess_except</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">curr_node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_nodes_postorder_subtree</span> <span class="p">(</span><span class="n">child</span><span class="p">):</span>
+			<span class="k">yield</span> <span class="n">curr_node</span>
+	<span class="k">yield</span> <span class="n">start</span>
+		
+
+<div class="viewcode-block" id="iter_subtree_preorder"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.triters.iter_subtree_preorder">[docs]</a><span class="k">def</span> <span class="nf">iter_subtree_preorder</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Traverse nodes preorder (ancestors first) down from this node.</span>
+
+<span class="sd">		:Parameters:</span>
+<span class="sd">			start</span>
+<span class="sd">				The node to start traversal from.</span>
+
+<span class="sd">		:Returns:</span>
+<span class="sd">			A tree node.</span>
+
+<span class="sd">	Notice that traversal includes - and starts with - the start node, at</span>
+<span class="sd">	the head of the tree. </span>
+
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="c">## Preconditions &amp; preparation:</span>
+	<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_rooted</span><span class="p">()),</span> <span class="s">&quot;method requires a rooted tree&quot;</span>
+	<span class="c">## Main:</span>
+	<span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_node</span> <span class="p">(</span><span class="n">start</span><span class="p">)</span>
+	<span class="c"># actually yield nodes</span>
+	<span class="k">yield</span> <span class="n">start</span>
+	<span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_adjacent_nodes_except</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">curr_node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_nodes_postorder_subtree</span> <span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+			<span class="k">yield</span> <span class="n">curr_node</span>
+</div>
+<span class="k">def</span> <span class="nf">_iter_subtree_preorder</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Traverse the nodes preorder within a subtree.</span>
+
+
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="c"># actually yield nodes</span>
+	<span class="k">yield</span> <span class="n">start</span>
+	<span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_adjacent_nodess_except</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">curr_node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_nodes_postorder_subtree</span> <span class="p">(</span><span class="n">child</span><span class="p">):</span>
+			<span class="k">yield</span> <span class="n">curr_node</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Paul Agapow.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

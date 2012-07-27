@@ -41,7 +41,7 @@ class BaseIO (object):
 		"""
 		C'tor for the class.
 
-		:Params:
+		:Parameters:
 			dialect Dialect or dict
 				A set of properties for IO behaviour.
 
@@ -58,7 +58,7 @@ class BaseIO (object):
 
 		Similar to (and uses) the dictionary 'get' method.
 
-		:Params:
+		:Parameters:
 			prop string
 				The property name.
 			default
@@ -76,7 +76,7 @@ class BaseIO (object):
 
 		Similar to (and uses) the dictionary 'set' method.
 
-		:Params:
+		:Parameters:
 			prop string
 				The property name.
 			value
@@ -91,7 +91,7 @@ class BaseIO (object):
 
 		Similar to (and uses) the dictionary 'has_key' method.
 
-		:Params:
+		:Parameters:
 			prop string
 				The property name.
 
@@ -120,7 +120,7 @@ class BaseReader (BaseIO):
 		This just performs a bit of house keeping and hands off to ``_read``
 		to do the actual work.
 
-		:Params:
+		:Parameters:
 			in
 				This can be an open file, file-like object or the path to a
 				file.
@@ -139,7 +139,7 @@ class BaseReader (BaseIO):
 		This is where the actual work is done. Subclasses must override this
 		method.
 
-		:Params:
+		:Parameters:
 			in
 				An open file or file-like object.
 
@@ -170,7 +170,7 @@ class BaseWriter (BaseIO):
 		This just performs a bit of house keeping and hands off to ``_write``
 		to do the actual work.
 
-		:Params:
+		:Parameters:
 			out
 				This can be an open file, file-like object or the path to a
 				file.
@@ -186,7 +186,7 @@ class BaseWriter (BaseIO):
 		This is where the actual work is done. Subclasses must override this
 		method.
 
-		:Params:
+		:Parameters:
 			tree
 				A rooted or unrooted phylogeny.
 			out

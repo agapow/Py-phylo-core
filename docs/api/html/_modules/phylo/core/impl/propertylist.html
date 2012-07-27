@@ -1,0 +1,227 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>phylo.core.impl.propertylist &mdash; phylo.core 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="top" title="phylo.core 2.0 documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for phylo.core.impl.propertylist</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A simple dict-like object for storing properties.</span>
+
+<span class="sd">In phylotree, nodes and branches are basically lists of key-values (topology</span>
+<span class="sd">is stored in the tree proper). This class thus serves as a useful base for</span>
+<span class="sd">those.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># TODO: restrict keys to strings</span>
+
+
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;restructuredtext en&#39;</span>
+
+
+<span class="c">### IMPORTS ###</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+	<span class="s">&#39;PropertyList&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="c">### IMPLEMENTATION ###</span>
+
+<div class="viewcode-block" id="PropertyList"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.propertylist.PropertyList">[docs]</a><span class="k">class</span> <span class="nc">PropertyList</span> <span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	A simple key-value list, realised as a Python dictionary.</span>
+
+<span class="sd">	This has little to offer over a standard dictionary, except to restrict key</span>
+<span class="sd">	types to strings, and being able to be used as a key itself in</span>
+<span class="sd">	dictionaries. These traits are useful for the phylogeny internal</span>
+<span class="sd">	implementation. Note that not all of the dictionary interface has been</span>
+<span class="sd">	implemented.</span>
+
+<span class="sd">	For example::</span>
+
+<span class="sd">		&gt;&gt;&gt; p = PropertyList()</span>
+<span class="sd">		&gt;&gt;&gt; p[&#39;foo&#39;] = &#39;bar&#39;</span>
+<span class="sd">		&gt;&gt;&gt; p[&#39;foo&#39;]</span>
+<span class="sd">		&#39;bar&#39;</span>
+<span class="sd">		&gt;&gt;&gt; p[&#39;baz&#39;] = 3</span>
+<span class="sd">		&gt;&gt;&gt; p[3] = &#39;baz&#39;</span>
+<span class="sd">		Traceback (most recent call last):</span>
+<span class="sd">		...</span>
+<span class="sd">		AssertionError: only string keys (not &#39;&lt;type &#39;int&#39;&gt;&#39;) allowed in property lists</span>
+<span class="sd">		&gt;&gt;&gt; d = {}</span>
+<span class="sd">		&gt;&gt;&gt; d[p] = 3</span>
+<span class="sd">		&gt;&gt;&gt; d[p]</span>
+<span class="sd">		3</span>
+
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="c"># NOTE: why not use a dictionary itself? Because dictionaries are mutable</span>
+	<span class="c"># and we need to use the node/branch propertylist as a key inside a tree</span>
+	<span class="c"># NOTE: we cannot sublcass dict directly, as this prevents the propertylist</span>
+	<span class="c"># from being used as a key.</span>
+	
+	<span class="c">## LIFECYCLE:</span>
+	<span class="k">def</span> <span class="nf">__init__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Construct a mapping of key-value pairs.</span>
+<span class="sd">		</span>
+<span class="sd">		Note that the restriction on string-only keys in not currently enforced</span>
+<span class="sd">		in this constructor.</span>
+<span class="sd">		</span>
+<span class="sd">		For example::</span>
+<span class="sd">		</span>
+<span class="sd">			&gt;&gt;&gt; p1 = PropertyList({&#39;foo&#39;: 1, &#39;bar&#39;: 2})</span>
+<span class="sd">			&gt;&gt;&gt; p1[&#39;foo&#39;] == 1</span>
+<span class="sd">			True</span>
+<span class="sd">			&gt;&gt;&gt; p2 = PropertyList(foo=1, bar=2)</span>
+<span class="sd">			&gt;&gt;&gt; p2[&#39;foo&#39;] == 1</span>
+<span class="sd">			True</span>
+<span class="sd">			</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_props</span> <span class="o">=</span> <span class="nb">dict</span> <span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+	<span class="c">## ACCESSORS:</span>
+	<span class="k">def</span> <span class="nf">__getitem__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_props</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+<div class="viewcode-block" id="PropertyList.get"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.propertylist.PropertyList.get">[docs]</a>	<span class="k">def</span> <span class="nf">get</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_props</span><span class="o">.</span><span class="n">get</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+		</div>
+<div class="viewcode-block" id="PropertyList.has_key"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.propertylist.PropertyList.has_key">[docs]</a>	<span class="k">def</span> <span class="nf">has_key</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span>
+		</div>
+	<span class="k">def</span> <span class="nf">__contains__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_props</span>
+
+<div class="viewcode-block" id="PropertyList.items"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.propertylist.PropertyList.items">[docs]</a>	<span class="k">def</span> <span class="nf">items</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_props</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+			</div>
+<div class="viewcode-block" id="PropertyList.keys"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.propertylist.PropertyList.keys">[docs]</a>	<span class="k">def</span> <span class="nf">keys</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_props</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+		</div>
+<div class="viewcode-block" id="PropertyList.values"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.propertylist.PropertyList.values">[docs]</a>	<span class="k">def</span> <span class="nf">values</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_props</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+</div>
+	<span class="k">def</span> <span class="nf">__repr__</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="nb">str</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_props</span><span class="p">))</span>
+
+	<span class="c">## MUTATORS:</span>
+	<span class="k">def</span> <span class="nf">__setitem__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">)),</span> \
+			<span class="s">&quot;only string keys (not &#39;</span><span class="si">%s</span><span class="s">&#39;) allowed in property lists&quot;</span> <span class="o">%</span> <span class="nb">type</span> <span class="p">(</span><span class="n">key</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_props</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+	<span class="k">def</span> <span class="nf">__delitem__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+		<span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_props</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+		
+<div class="viewcode-block" id="PropertyList.clear"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.propertylist.PropertyList.clear">[docs]</a>	<span class="k">def</span> <span class="nf">clear</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_props</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+		</div>
+<div class="viewcode-block" id="PropertyList.update"><a class="viewcode-back" href="../../../../phylo.core.impl.html#phylo.core.impl.propertylist.PropertyList.update">[docs]</a>	<span class="k">def</span> <span class="nf">update</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_props</span><span class="o">.</span><span class="n">update</span> <span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+
+
+<span class="c">### TEST &amp; DEBUG ###</span>
+</div></div>
+<span class="k">def</span> <span class="nf">_doctest</span> <span class="p">():</span>
+	<span class="kn">import</span> <span class="nn">doctest</span>
+	<span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span> <span class="p">()</span>
+
+
+<span class="c">### MAIN ###</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+	<span class="n">_doctest</span><span class="p">()</span>
+
+
+<span class="c">### END ########################################################################</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Paul Agapow.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

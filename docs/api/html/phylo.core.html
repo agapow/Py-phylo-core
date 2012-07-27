@@ -1,0 +1,978 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>core Package &mdash; phylo.core 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="phylo.core 2.0 documentation" href="index.html" />
+    <link rel="next" title="impl Package" href="phylo.core.impl.html" />
+    <link rel="prev" title="io Package" href="phylo.core.io.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="phylo.core.impl.html" title="impl Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="phylo.core.io.html" title="io Package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">phylo.core 2.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="core-package">
+<h1>core Package<a class="headerlink" href="#core-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">core</span></tt> Package<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-phylo.core"></span><p>Classes for representing phylogenetic trees.</p>
+<p>This package presents a set of pure classes for representing phylogenies, with
+the following features:</p>
+<ul class="simple">
+<li>Attaching abitray</li>
+</ul>
+<span class="target" id="module-phylo.core"></span></div>
+<div class="section" id="module-phylo.core.analysis">
+<span id="analysis-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">analysis</span></tt> Module<a class="headerlink" href="#module-phylo.core.analysis" title="Permalink to this headline">¶</a></h2>
+<p>Algorithms and analyses for trees.</p>
+<p>Placed in a seperate module for orthogonality and to allow multiple tree
+implementations.</p>
+<dl class="function">
+<dt id="phylo.core.analysis.evol_history">
+<tt class="descclassname">phylo.core.analysis.</tt><tt class="descname">evol_history</tt><big>(</big><em>tree</em>, <em>nodes</em>, <em>rooted=True</em><big>)</big><a class="reference internal" href="_modules/phylo/core/analysis.html#evol_history"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.analysis.evol_history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate evolutionary history in the Nee-May-Faith sense.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><dl class="first last docutils">
+<dt>tree</dt>
+<dd><p class="first last">a tree</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If <cite>rooted</cite>, include the root. Note that the nodes do not have to
+be tips but can be internal.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.analysis.get_centroid_nodes">
+<tt class="descclassname">phylo.core.analysis.</tt><tt class="descname">get_centroid_nodes</tt><big>(</big><em>self</em><big>)</big><a class="reference internal" href="_modules/phylo/core/analysis.html#get_centroid_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.analysis.get_centroid_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the nodes which are closest to the tree centroid.</p>
+<p>As per Jordan (1869), the centroid is the point at which the number of
+nodes on either side are most equal, the best possible balance. A tree
+will have either one or two centroids. If two, they will be neigbours,
+and both are returned.</p>
+<p>We calculate this by &#8216;eating away&#8217; at the tips of the tree, until only 1
+or 2 are left. Put another way, we list the nodes and their order,
+remove the nodes with order 1 and lower the order of any nodes they are
+attached to, and repeat until 1 or 2 are left.</p>
+<p>There are some apparent conflicts with definition. According to
+Mathworld, the &#8216;weight&#8217; of a node is equal to the distance to the
+furtherest node, and the centroid is the node with the lowest &#8216;weight&#8217;.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns :</th><td class="field-body">A list of the centroids.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.analysis.get_dists_from_node">
+<tt class="descclassname">phylo.core.analysis.</tt><tt class="descname">get_dists_from_node</tt><big>(</big><em>self</em>, <em>node</em>, <em>dist_fxn=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/analysis.html#get_dists_from_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.analysis.get_dists_from_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the distance that nodes lie from a given node.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.analysis.has_polytomies">
+<tt class="descclassname">phylo.core.analysis.</tt><tt class="descname">has_polytomies</tt><big>(</big><em>tree</em>, <em>assume_root_branch=True</em><big>)</big><a class="reference internal" href="_modules/phylo/core/analysis.html#has_polytomies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.analysis.has_polytomies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does this tree contain internal nodes with evidence of mutltiple splits?</p>
+<p>Are there any nodes at which there appears to have been a split into
+more than 2 children? Again, some algorithms don&#8217;t behave well in these
+cases and so we check for them. This is not quite the obverse of
+<tt class="docutils literal"><span class="pre">is_bifurcating</span></tt> - tree may contain no polytomies, but may not be
+bifurcating. And again, rooted trees behave differently.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.analysis.has_singletons">
+<tt class="descclassname">phylo.core.analysis.</tt><tt class="descname">has_singletons</tt><big>(</big><em>tree</em>, <em>assume_root_branch=True</em><big>)</big><a class="reference internal" href="_modules/phylo/core/analysis.html#has_singletons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.analysis.has_singletons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does this tree contain internal nodes with only a single child?</p>
+<p>Many algorithms or parsers assume that all nodes have at least 2 
+descendants (e.g. most Newick readers). In reconstructed phylogenies,
+this holds because internal nodes are evidenced by at least two
+children. But when simulating the growth of phylogenies, in cases of
+phyletic transformation or extinction, we can often end up with
+internal nodes that have only two neighbours, i.e. where a node has
+given rise to a single other node. This function checks for those
+exceptions by counting neighbours. Again, there is an complexity in the
+case of rooted trees, as the root has an inferred extra neighbour.</p>
+<p>Note: there must be a technical term for this but I haven&#8217;t found
+it.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.analysis.is_bifurcating">
+<tt class="descclassname">phylo.core.analysis.</tt><tt class="descname">is_bifurcating</tt><big>(</big><em>tree</em>, <em>assume_root_branch=True</em><big>)</big><a class="reference internal" href="_modules/phylo/core/analysis.html#is_bifurcating"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.analysis.is_bifurcating" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is this a strictly binary tree?</p>
+<p>Many algorithms require binary trees. We test this by counting the
+number of neighbours of each node.  A twist is introduced in the
+case of rooted trees, as the root has an inferred extra neighbour.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.analysis.is_monophyletic">
+<tt class="descclassname">phylo.core.analysis.</tt><tt class="descname">is_monophyletic</tt><big>(</big><em>tree</em>, <em>nodes</em><big>)</big><a class="reference internal" href="_modules/phylo/core/analysis.html#is_monophyletic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.analysis.is_monophyletic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do these nodes form a coherent subtree with no other tips included?</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><dl class="first docutils">
+<dt>tree</dt>
+<dd><p class="first last">a rooted tree</p>
+</dd>
+<dt>nodes</dt>
+<dd><p class="first last">a list of nodes within that tree</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns :</th><td class="field-body"><p class="first last">a boolean</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note that you can pass internal nodes in the list of nodes without causing
+as error, but the answer will be False unless all tips descended from that
+node are also included.</p>
+<p>(It is actually debatable how internal nodes should be treated in this
+context. You could argue that passing an internal node is equivalent to
+including all below it, so it may be more sensible</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.analysis.mrca">
+<tt class="descclassname">phylo.core.analysis.</tt><tt class="descname">mrca</tt><big>(</big><em>tree</em>, <em>nodes</em><big>)</big><a class="reference internal" href="_modules/phylo/core/analysis.html#mrca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.analysis.mrca" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the most recent common ancestor of a set of nodes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><dl class="first docutils">
+<dt>tree</dt>
+<dd><p class="first last">a rooted phylogenetic tree</p>
+</dd>
+<dt>nodes</dt>
+<dd><p class="first last">an iterable of nodes, iternal or tips</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns :</th><td class="field-body"><p class="first last">The most recent common ancestor of the nodes passed in.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If only a single node is passed in, it is returned as the answer (being the
+common ancestor of itself).</p>
+<p>Of course, this only works with rooted trees.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.analysis.rooted_subtree_history">
+<tt class="descclassname">phylo.core.analysis.</tt><tt class="descname">rooted_subtree_history</tt><big>(</big><em>rtree</em>, <em>nodes</em>, <em>inc_root=True</em><big>)</big><a class="reference internal" href="_modules/phylo/core/analysis.html#rooted_subtree_history"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.analysis.rooted_subtree_history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate evolutionary history a la May-Nee or Faith.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><dl class="first last docutils">
+<dt>rtree</dt>
+<dd><p class="first last">a rooted tree</p>
+</dd>
+<dt>nodes</dt>
+<dd><p class="first last">a subtree as defined</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p>EH can only be calculated over a rooted tree since</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.analysis.total_distance">
+<tt class="descclassname">phylo.core.analysis.</tt><tt class="descname">total_distance</tt><big>(</big><em>tree</em><big>)</big><a class="reference internal" href="_modules/phylo/core/analysis.html#total_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.analysis.total_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the total distance encompassed by a tree.</p>
+<p>This simply iterates over the branches and sums distances.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-phylo.core.branch">
+<span id="branch-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">branch</span></tt> Module<a class="headerlink" href="#module-phylo.core.branch" title="Permalink to this headline">¶</a></h2>
+<p>A class for branch on phylogenetic trees.</p>
+<dl class="class">
+<dt id="phylo.core.branch.Branch">
+<em class="property">class </em><tt class="descclassname">phylo.core.branch.</tt><tt class="descname">Branch</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/phylo/core/branch.html#Branch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.branch.Branch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="phylo.core.impl.html#phylo.core.impl.propertylist.PropertyList" title="phylo.core.impl.propertylist.PropertyList"><tt class="xref py py-class docutils literal"><span class="pre">phylo.core.impl.propertylist.PropertyList</span></tt></a></p>
+<p>A branch in a phylogeny.</p>
+<p>This serves to contain branch properties and annotations. The actual
+topology (nodes the branch connects) are maintained by the tree class,
+with this as a key. Thus, branches may be shared between trees, and 
+separate implementations for rooted and unrooted trees aren&#8217;t needed.</p>
+<dl class="attribute">
+<dt id="phylo.core.branch.Branch.distance">
+<tt class="descname">distance</tt><a class="headerlink" href="#phylo.core.branch.Branch.distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the length of the branch.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Branch</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">distance</span> <span class="o">==</span> <span class="bp">None</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">set_distance</span> <span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">distance</span> <span class="o">==</span> <span class="mf">2.0</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="p">[</span><span class="s">&#39;distance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">distance</span> <span class="o">==</span> <span class="mf">1.0</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.branch.Branch.get_distance">
+<tt class="descname">get_distance</tt><big>(</big><em>default=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/branch.html#Branch.get_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.branch.Branch.get_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the length of the branch.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Branch</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">distance</span> <span class="o">==</span> <span class="bp">None</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">set_distance</span> <span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">distance</span> <span class="o">==</span> <span class="mf">2.0</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="p">[</span><span class="s">&#39;distance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">distance</span> <span class="o">==</span> <span class="mf">1.0</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.branch.Branch.set_distance">
+<tt class="descname">set_distance</tt><big>(</big><em>val</em><big>)</big><a class="reference internal" href="_modules/phylo/core/branch.html#Branch.set_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.branch.Branch.set_distance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-phylo.core.node">
+<span id="node-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">node</span></tt> Module<a class="headerlink" href="#module-phylo.core.node" title="Permalink to this headline">¶</a></h2>
+<p>A class for nodes within phylogenetic trees.</p>
+<dl class="class">
+<dt id="phylo.core.node.Node">
+<em class="property">class </em><tt class="descclassname">phylo.core.node.</tt><tt class="descname">Node</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/phylo/core/node.html#Node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.node.Node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="phylo.core.impl.html#phylo.core.impl.propertylist.PropertyList" title="phylo.core.impl.propertylist.PropertyList"><tt class="xref py py-class docutils literal"><span class="pre">phylo.core.impl.propertylist.PropertyList</span></tt></a></p>
+<p>A node in a phylogeny.</p>
+<p>This serves to contain node properties and annotations. The actual topology
+(connections between nodes) are maintained by the tree class, with this as
+a key. Thus, nodes may be shared between trees, and separate
+implementations for rooted and unrooted trees aren&#8217;t needed.</p>
+<dl class="method">
+<dt id="phylo.core.node.Node.get_title">
+<tt class="descname">get_title</tt><big>(</big><em>default=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/node.html#Node.get_title"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.node.Node.get_title" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the name or title of the node.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="n">Node</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">==</span> <span class="bp">None</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&#39;no title&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">==</span> <span class="s">&#39;no title&#39;</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;foo&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">==</span> <span class="s">&#39;foo&#39;</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="phylo.core.node.Node.name">
+<tt class="descname">name</tt><a class="headerlink" href="#phylo.core.node.Node.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the name or title of the node.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="n">Node</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">==</span> <span class="bp">None</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&#39;no title&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">==</span> <span class="s">&#39;no title&#39;</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;foo&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">==</span> <span class="s">&#39;foo&#39;</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.node.Node.set_title">
+<tt class="descname">set_title</tt><big>(</big><em>val</em><big>)</big><a class="reference internal" href="_modules/phylo/core/node.html#Node.set_title"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.node.Node.set_title" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="phylo.core.node.Node.title">
+<tt class="descname">title</tt><a class="headerlink" href="#phylo.core.node.Node.title" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the name or title of the node.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="n">Node</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">==</span> <span class="bp">None</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&#39;no title&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">==</span> <span class="s">&#39;no title&#39;</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;foo&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">title</span> <span class="o">==</span> <span class="s">&#39;foo&#39;</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-phylo.core.path">
+<span id="path-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">path</span></tt> Module<a class="headerlink" href="#module-phylo.core.path" title="Permalink to this headline">¶</a></h2>
+<p>A class for tracing paths of nodes within phylogenetic trees.</p>
+<dl class="class">
+<dt id="phylo.core.path.Path">
+<em class="property">class </em><tt class="descclassname">phylo.core.path.</tt><tt class="descname">Path</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/phylo/core/path.html#Path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.path.Path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A node in a phylogeny.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-phylo.core.tree">
+<span id="tree-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">tree</span></tt> Module<a class="headerlink" href="#module-phylo.core.tree" title="Permalink to this headline">¶</a></h2>
+<p>A class for phylogenetic trees.</p>
+<dl class="class">
+<dt id="phylo.core.tree.Tree">
+<em class="property">class </em><tt class="descclassname">phylo.core.tree.</tt><tt class="descname">Tree</tt><big>(</big><em>dist_type=&lt;type 'float'&gt;</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>An base class for phylogenetic trees.</p>
+<p>This class encapsulates both rooted and unrooted trees, so the two may be
+easily interconverted and compared. As a consequence, not all methods apply 
+for all instances (e.g. subtree traversal can only be used on rooted
+trees). This class can also serves as an interface or base to other, more
+specialised tree classes.</p>
+<p>In-order iteration isn&#8217;t provided, as it is meaningless outside strictly
+bifurcating trees.</p>
+<p>For example:</p>
+<div class="highlight-python"><pre># make the tree (A, (B, C))
+&gt;&gt;&gt; t = Tree()
+&gt;&gt;&gt; t.count_nodes()
+0
+&gt;&gt;&gt; r, x = t.add_node (None, {'name': 'root'})
+&gt;&gt;&gt; a, x = t.add_node (r, {'name': 'A'})
+&gt;&gt;&gt; i, x = t.add_node (r, {'name': 'BC'})
+&gt;&gt;&gt; b, x = t.add_node (i, {'name': 'B'})
+&gt;&gt;&gt; c, x = t.add_node (i, {'name': 'C'})
+&gt;&gt;&gt; t.count_nodes()
+5
+&gt;&gt;&gt; t.count_branches()
+4</pre>
+</div>
+<dl class="method">
+<dt id="phylo.core.tree.Tree.add_first_node">
+<tt class="descname">add_first_node</tt><big>(</big><em>node_props=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.add_first_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.add_first_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the first node in the tree.</p>
+<p>A convenience method wrapping <tt class="docutils literal"><span class="pre">add_node</span></tt>, given that its arguments
+concerning branches are not used when creating the first node.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.add_node">
+<tt class="descname">add_node</tt><big>(</big><em>parent=None</em>, <em>node_props=None</em>, <em>distance=None</em>, <em>branch_props=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.add_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.add_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a node and connect it to the rest of the tree.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><dl class="first docutils">
+<dt>parent Node</dt>
+<dd><p class="first last">The node to connect the new node to. If this is the first node,
+this argument should be unused.</p>
+</dd>
+<dt>dist</dt>
+<dd><p class="first last">The distance of the newly created branch between the parent and
+new node. If this is the first node, this argument should be
+unused.</p>
+</dd>
+<dt>node_props dict or mapping</dt>
+<dd><p class="first last">Annotations on the newly created node.</p>
+</dd>
+<dt>branch_props dict or mapping</dt>
+<dd><p class="first last">Annotations on the newly created branch between the parent and
+new node. If this is the first node, this argument should be
+unused.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns :</th><td class="field-body"><p class="first last">The newly created node.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.add_nodes_from">
+<tt class="descname">add_nodes_from</tt><big>(</big><em>nested_seq</em>, <em>node_props_fn=None</em>, <em>dist_fn=None</em>, <em>branch_props_fn=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.add_nodes_from"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.add_nodes_from" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add nodes and branches from a series of nested sequences.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.add_root">
+<tt class="descname">add_root</tt><big>(</big><em>node_props=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.add_root"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.add_root" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the first node in a rooted tree.</p>
+<p>A convenience method wrapping <tt class="docutils literal"><span class="pre">add_node</span></tt>, given that its arguments
+concerning branches are not used when creating the first node. It also
+sets this first node as the root.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.calc_evol_history">
+<tt class="descname">calc_evol_history</tt><big>(</big><em>nodes</em>, <em>rooted=True</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.calc_evol_history"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.calc_evol_history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate evolutionary history in the Nee-May-Faith sense.</p>
+<p>If <cite>rooted</cite>, include the root. Note that the nodes do not have to be tips,
+but can be internal.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Empty the tree, removing all nodes and branches.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.collapse_node_into">
+<tt class="descname">collapse_node_into</tt><big>(</big><em>dead_node</em>, <em>new_neighbour</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.collapse_node_into"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.collapse_node_into" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a node, moving any connections to a given neighbour.</p>
+<p>This is intended for use in creating polytomies, or destroying singletons
+that may create algorithmic problems or internal nodes that may not exist.
+The opposite of <cite>insert_node</cite>, this essentially &#8220;retracts&#8221; a node
+into its parent, swapping it for its children. This is exactly like
+collapsing into a polytomy. In effect the branch connecting the child
+to the parent disappears.
+This deletes a node and its branch to another node while preserving
+all other objects by reconnecting them to that neighbour. For example,
+given nodes <tt class="docutils literal"><span class="pre">{X,</span> <span class="pre">A,</span> <span class="pre">B,</span> <span class="pre">C}</span></tt> where <tt class="docutils literal"><span class="pre">A</span></tt>, <tt class="docutils literal"><span class="pre">B</span></tt> and <tt class="docutils literal"><span class="pre">C</span></tt> are connected to <tt class="docutils literal"><span class="pre">X</span></tt> by branches
+a, b &amp; c respectively:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">collapse_into</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>would result in the deletion of <tt class="docutils literal"><span class="pre">X</span></tt> and <tt class="docutils literal"><span class="pre">a</span></tt>, with nodes <tt class="docutils literal"><span class="pre">B</span></tt> &amp; <tt class="docutils literal"><span class="pre">C</span></tt> now adjacent
+<tt class="docutils literal"><span class="pre">A</span></tt> with branches <tt class="docutils literal"><span class="pre">b</span></tt> &amp; <tt class="docutils literal"><span class="pre">c</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.count_adjacent_nodes">
+<tt class="descname">count_adjacent_nodes</tt><big>(</big><em>node</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.count_adjacent_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.count_adjacent_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>How many nodes are directly adjacent to this one?</p>
+<p>In graph theory terms, this gives the <em>order</em> of the node.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.count_branches">
+<tt class="descname">count_branches</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.count_branches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.count_branches" title="Permalink to this definition">¶</a></dt>
+<dd><p>How many branches does this tree contain?</p>
+<p>This will be equal to <tt class="docutils literal"><span class="pre">count_nodes()</span> <span class="pre">-</span> <span class="pre">1</span></tt>, but we calculate it
+independently. Note this doesn&#8217;t count any theoretical branch running
+off the root.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.count_nodes">
+<tt class="descname">count_nodes</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.count_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.count_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>How many nodes does this tree contain?</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.count_tip_nodes">
+<tt class="descname">count_tip_nodes</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.count_tip_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.count_tip_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>How many tips / leaves / terminal nodes does this tree have?</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.get_branch">
+<tt class="descname">get_branch</tt><big>(</big><em>node1</em>, <em>node2</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.get_branch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.get_branch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the branch running between two nodes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.get_centroid_nodes">
+<tt class="descname">get_centroid_nodes</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.get_centroid_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.get_centroid_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the nodes which are closest to the tree centroid.</p>
+<p>As per Jordan (1869), the centroid is the point at which the number of
+nodes on either side are most equal, the best possible balance. A tree
+will have either one or two centroids. If two, they will be neigbours,
+and both are returned.</p>
+<p>We calculate this by &#8216;eating away&#8217; at the tips of the tree, until only 1
+or 2 are left. Put another way, we list the nodes and their order,
+remove the nodes with order 1 and lower the order of any nodes they are
+attached to, and repeat until 1 or 2 are left.</p>
+<p>There are some apparent conflicts with definition. According to
+Mathworld, the &#8216;weight&#8217; of a node is equal to the distance to the
+furtherest node, and the centroid is the node with the lowest &#8216;weight&#8217;.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns :</th><td class="field-body">A list of the centroids.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.get_distance_from_node">
+<tt class="descname">get_distance_from_node</tt><big>(</big><em>center</em>, <em>dist_fxn=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.get_distance_from_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.get_distance_from_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the distance that nodes lie from a given node.</p>
+<p>By definition, the node itself lies 0 distance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.get_dists_from_node">
+<tt class="descname">get_dists_from_node</tt><big>(</big><em>node</em>, <em>dist_fxn=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.get_dists_from_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.get_dists_from_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the distance that nodes lie from a given node.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.get_nodes">
+<tt class="descname">get_nodes</tt><big>(</big><em>branch</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.get_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.get_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the nodes abutting either end of a branch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns :</th><td class="field-body">A tuple of the two nodes. Order is not specified.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.get_parent">
+<tt class="descname">get_parent</tt><big>(</big><em>node</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.get_parent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.get_parent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the parent of this node.</p>
+<p>This is an experimental method, to gauge the efficacy of determining
+parents on the fly. Parentage throughout a tree is defined solely by
+the position of the root and so a lot of internal paperwork can be saved
+by <em>just</em> recording the root.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.get_tips_subtended">
+<tt class="descname">get_tips_subtended</tt><big>(</big><em>center</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.get_tips_subtended"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.get_tips_subtended" title="Permalink to this definition">¶</a></dt>
+<dd><p>How many tip nodes eventually derive from this node.</p>
+<p>We define tips to subtend themselves (and therefore be valued as 1) and
+the &#8216;center&#8217; of the tree to subtend all tips.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns :</th><td class="field-body">A dictionary of node - number of tips.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.insert_node_between">
+<tt class="descname">insert_node_between</tt><big>(</big><em>parent</em>, <em>child</em>, <em>node_props=None</em>, <em>distance=None</em>, <em>branch_props=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.insert_node_between"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.insert_node_between" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert a node between the two given.</p>
+<p>In other programs, this is referred to as bisect. It behaves like the
+other node creation functions, and asides from the insertion, does not
+alter the tree structure (i.e. branchlengths on other nodes are not
+touched). The child node (the one being inserted above), stays the same
+distance away from the new node as it was from its old parent. In effect
+this stretches away the node below with the introduction of the new.</p>
+<p>While we talk here about placing a new node above a child and below it&#8217;s
+parent, this usage is arbitrary. By swapping the order of the nodes, the
+same distance could be maintained from the parent to the new node.
+Note that currently ordering is not maintained.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.is_empty">
+<tt class="descname">is_empty</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.is_empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.is_empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does the tree have no nodes?</p>
+<p>Then how does it smell?</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.is_monophyletic">
+<tt class="descname">is_monophyletic</tt><big>(</big><em>tips</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.is_monophyletic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.is_monophyletic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does the list of tips form a coherent subtree with no other tips included?</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.is_node_tip">
+<tt class="descname">is_node_tip</tt><big>(</big><em>node</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.is_node_tip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.is_node_tip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is this a terminating (leaf) node?</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.is_rooted">
+<tt class="descname">is_rooted</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.is_rooted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.is_rooted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is a root defined for this tree?</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.iter_adjacent_nodes">
+<tt class="descname">iter_adjacent_nodes</tt><big>(</big><em>n</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.iter_adjacent_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.iter_adjacent_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traverse directly adjacent nodes.</p>
+<p>See <cite>iter_nodes</cite> for further notes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.iter_branches">
+<tt class="descname">iter_branches</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.iter_branches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.iter_branches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traverse all branches in the tree.</p>
+<p>The order of iteration isn&#8217;t guaranteed to be consistent.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.iter_child_nodes">
+<tt class="descname">iter_child_nodes</tt><big>(</big><em>n</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.iter_child_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.iter_child_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traverse all direct children of a node.</p>
+<p>Note that unlike other iterators, this requires a explicit starting
+node.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.iter_nodes">
+<tt class="descname">iter_nodes</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.iter_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.iter_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traverse all nodes in the tree.</p>
+<p>The order of iteration isn&#8217;t guaranteed to be consistent.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.iter_tips">
+<tt class="descname">iter_tips</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.iter_tips"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.iter_tips" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traverse all tips in the tree.</p>
+<p>The order of iteration isn&#8217;t guaranteed to be consistent.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.mrca">
+<tt class="descname">mrca</tt><big>(</big><em>nodes</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.mrca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.mrca" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.nodes">
+<tt class="descname">nodes</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.nodes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.parent_node">
+<tt class="descname">parent_node</tt><big>(</big><em>n</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.parent_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.parent_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the parent of this node, or None if root.</p>
+<p>Note: only sensible if tree is rooted.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="phylo.core.tree.Tree.root">
+<tt class="descname">root</tt><a class="headerlink" href="#phylo.core.tree.Tree.root" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.shift_neighbours">
+<tt class="descname">shift_neighbours</tt><big>(</big><em>node</em>, <em>shift=1</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.shift_neighbours"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.shift_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change the ordering of connections to adjacent nodes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.subtree">
+<tt class="descname">subtree</tt><big>(</big><em>nodes</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.subtree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.subtree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a list of nodes, construct a tree consisting of just those nodes.</p>
+<p>Note that this shares the actual nodes and branches with the original
+tree. If you want to start messing with it, make a copy.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.tips">
+<tt class="descname">tips</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.tips"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.tips" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="phylo.core.tree.Tree.unroot">
+<tt class="descname">unroot</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.unroot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.unroot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-phylo.core.triters">
+<span id="triters-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">triters</span></tt> Module<a class="headerlink" href="#module-phylo.core.triters" title="Permalink to this headline">¶</a></h2>
+<p>Tree iterators and functions for searching within a tree.</p>
+<p>Tree iterators should follow the general form:</p>
+<blockquote>
+<div>iter_object_[direction] (tree, start=None, stop=None)</div></blockquote>
+<p>where:</p>
+<ul class="simple">
+<li>iterators are named as <tt class="docutils literal"><span class="pre">iter_object[_direction]</span></tt>, where <tt class="docutils literal"><span class="pre">object</span></tt> is the
+type being returned by the iterator (e.g. <tt class="docutils literal"><span class="pre">node</span></tt> or <tt class="docutils literal"><span class="pre">branch</span></tt>) and
+<tt class="docutils literal"><span class="pre">direction</span></tt> indicates what order the iteration takes place in (e.g.
+<tt class="docutils literal"><span class="pre">postorder</span></tt>, <tt class="docutils literal"><span class="pre">to_root</span></tt>).</li>
+<li><tt class="docutils literal"><span class="pre">start</span></tt> is where traversal begins, i.e. the first value returned. If
+<tt class="docutils literal"><span class="pre">None</span></tt> is passed, a logical starting point is selected, usually the root.</li>
+<li><tt class="docutils literal"><span class="pre">stop</span></tt> is where traversal halts. If given, this value will not be returned,
+i.e. iteration stops just before the value, in line with other Python
+iterators. If <tt class="docutils literal"><span class="pre">None</span></tt> is passed, traversal continues until the iterator is
+exhausted.</li>
+</ul>
+<dl class="function">
+<dt id="phylo.core.triters.find_all_nodes">
+<tt class="descclassname">phylo.core.triters.</tt><tt class="descname">find_all_nodes</tt><big>(</big><em>tree</em>, <em>pred</em>, <em>iter=None</em>, <em>start=None</em>, <em>stop=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/triters.html#find_all_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.triters.find_all_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all nodes that match the conditional function.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.triters.find_node">
+<tt class="descclassname">phylo.core.triters.</tt><tt class="descname">find_node</tt><big>(</big><em>tree</em>, <em>pred</em>, <em>iter=None</em>, <em>start=None</em>, <em>stop=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/triters.html#find_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.triters.find_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the first node that matches the conditional function.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.triters.iter_find_nodes">
+<tt class="descclassname">phylo.core.triters.</tt><tt class="descname">iter_find_nodes</tt><big>(</big><em>tree</em>, <em>pred</em>, <em>iter=None</em>, <em>start=None</em>, <em>stop=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/triters.html#iter_find_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.triters.iter_find_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over all nodes that match the conditional function.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.triters.iter_internal_nodes">
+<tt class="descclassname">phylo.core.triters.</tt><tt class="descname">iter_internal_nodes</tt><big>(</big><em>self</em><big>)</big><a class="reference internal" href="_modules/phylo/core/triters.html#iter_internal_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.triters.iter_internal_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traverse the internal nodes of the tree.</p>
+<p>The order of iteration isn&#8217;t guaranteed to be consistent. Notice that in
+rooted trees, the root is included unless it is a singleton.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.triters.iter_nodes_postorder">
+<tt class="descclassname">phylo.core.triters.</tt><tt class="descname">iter_nodes_postorder</tt><big>(</big><em>self</em>, <em>start=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/triters.html#iter_nodes_postorder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.triters.iter_nodes_postorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do a postorder (children / tips first) traversal of the nodes.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.triters.iter_nodes_preorder">
+<tt class="descclassname">phylo.core.triters.</tt><tt class="descname">iter_nodes_preorder</tt><big>(</big><em>self</em>, <em>start=None</em><big>)</big><a class="reference internal" href="_modules/phylo/core/triters.html#iter_nodes_preorder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.triters.iter_nodes_preorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do a postorder (children / tips first) traversal of the nodes.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.triters.iter_nodes_subtree">
+<tt class="descclassname">phylo.core.triters.</tt><tt class="descname">iter_nodes_subtree</tt><big>(</big><em>tree</em>, <em>start</em><big>)</big><a class="reference internal" href="_modules/phylo/core/triters.html#iter_nodes_subtree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.triters.iter_nodes_subtree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traverse all nodes in a subtree.</p>
+<p>Note that no consistent order is guaranteed.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.triters.iter_nodes_subtree_postorder">
+<tt class="descclassname">phylo.core.triters.</tt><tt class="descname">iter_nodes_subtree_postorder</tt><big>(</big><em>self</em>, <em>start</em><big>)</big><a class="reference internal" href="_modules/phylo/core/triters.html#iter_nodes_subtree_postorder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.triters.iter_nodes_subtree_postorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traverse nodes postorder (children / tips first) down from this node.</p>
+<blockquote>
+<div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt>start</dt>
+<dd><p class="first last">The node to start traversal from.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A tree node.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Notice that traversal includes - and finishes with - the start node, at
+the head of the tree.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.triters.iter_nodes_to_root">
+<tt class="descclassname">phylo.core.triters.</tt><tt class="descname">iter_nodes_to_root</tt><big>(</big><em>tree</em>, <em>start</em><big>)</big><a class="reference internal" href="_modules/phylo/core/triters.html#iter_nodes_to_root"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.triters.iter_nodes_to_root" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.triters.iter_subtree_preorder">
+<tt class="descclassname">phylo.core.triters.</tt><tt class="descname">iter_subtree_preorder</tt><big>(</big><em>self</em>, <em>start</em><big>)</big><a class="reference internal" href="_modules/phylo/core/triters.html#iter_subtree_preorder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.triters.iter_subtree_preorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traverse nodes preorder (ancestors first) down from this node.</p>
+<blockquote>
+<div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt>start</dt>
+<dd><p class="first last">The node to start traversal from.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A tree node.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Notice that traversal includes - and starts with - the start node, at
+the head of the tree.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phylo.core.triters.iter_tip_nodes">
+<tt class="descclassname">phylo.core.triters.</tt><tt class="descname">iter_tip_nodes</tt><big>(</big><em>self</em><big>)</big><a class="reference internal" href="_modules/phylo/core/triters.html#iter_tip_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.triters.iter_tip_nodes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="phylo.core.impl.html">impl Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="phylo.core.impl.html#id1"><tt class="docutils literal"><span class="pre">impl</span></tt> Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phylo.core.impl.html#odict-module"><tt class="docutils literal"><span class="pre">_odict</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phylo.core.impl.html#module-phylo.core.impl.odict"><tt class="docutils literal"><span class="pre">odict</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phylo.core.impl.html#module-phylo.core.impl.propertylist"><tt class="docutils literal"><span class="pre">propertylist</span></tt> Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="phylo.core.io.html">io Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="phylo.core.io.html#id1"><tt class="docutils literal"><span class="pre">io</span></tt> Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phylo.core.io.html#module-phylo.core.io.baseio"><tt class="docutils literal"><span class="pre">baseio</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phylo.core.io.html#module-phylo.core.io.dialect"><tt class="docutils literal"><span class="pre">dialect</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">core Package</a><ul>
+<li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">core</span></tt> Package</a></li>
+<li><a class="reference internal" href="#module-phylo.core.analysis"><tt class="docutils literal"><span class="pre">analysis</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-phylo.core.branch"><tt class="docutils literal"><span class="pre">branch</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-phylo.core.node"><tt class="docutils literal"><span class="pre">node</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-phylo.core.path"><tt class="docutils literal"><span class="pre">path</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-phylo.core.tree"><tt class="docutils literal"><span class="pre">tree</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-phylo.core.triters"><tt class="docutils literal"><span class="pre">triters</span></tt> Module</a></li>
+<li><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="phylo.core.io.html"
+                        title="previous chapter">io Package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="phylo.core.impl.html"
+                        title="next chapter">impl Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/phylo.core.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="phylo.core.impl.html" title="impl Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="phylo.core.io.html" title="io Package"
+             >previous</a> |</li>
+        <li><a href="index.html">phylo.core 2.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Paul Agapow.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

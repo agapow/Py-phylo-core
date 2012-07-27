@@ -1,0 +1,195 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>phylo.core.io.dialect &mdash; phylo.core 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="top" title="phylo.core 2.0 documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for phylo.core.io.dialect</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A simple class for holding I/O options.</span>
+
+<span class="sd">This is a bit of syntactic sugar to aid readability. In the case of I/O classes</span>
+<span class="sd">or functions, some cases may have a wide variety of options and possible</span>
+<span class="sd">behaviours. For example::</span>
+
+<span class="sd">   write_newick_tree (t, inc_branch_lens=True, inc_support_vals=False,</span>
+<span class="sd">      inc_root_len=False, use_translation_table=True, quote_names=True,</span>
+<span class="sd">      format_support_vals=&#39;%.2f&#39;, insert_line_breaks=True, ...)</span>
+
+<span class="sd">This leads to a large number of arguments with accompanying scope for error. In</span>
+<span class="sd">addition, many of these options are used in sets. For example options allowable</span>
+<span class="sd">in Nexus files, options allowable in MrBayes, options that keep all information</span>
+<span class="sd">in a tree ...</span>
+
+<span class="sd">A dialect therefore is a way of grouping and passing options for I/O. Largely it</span>
+<span class="sd">functions as a dictionary, with the added ability to define default values that</span>
+<span class="sd">can be overridden explicitly. In practice, dialects should be used like this::</span>
+
+<span class="sd">	# define a dialect with default values</span>
+<span class="sd">	class FooDialect (Dialect):</span>
+<span class="sd">	   defaults = {</span>
+<span class="sd">	      &#39;support_format&#39;: &#39;%.2f&#39;,</span>
+<span class="sd">	      &#39;include_support&#39;: True,</span>
+<span class="sd">	      &#39;quote_all_names&#39;: False,</span>
+<span class="sd">	   }</span>
+<span class="sd">	</span>
+<span class="sd">	class FooWriter (BaseWriter):</span>
+<span class="sd">	</span>
+<span class="sd">		def __init__ (self, dialect={}):</span>
+<span class="sd">			# IO class has default dialect</span>
+<span class="sd">			# This can be overridden in instances</span>
+<span class="sd">			d = FooDialect().merge (dialect)</span>
+<span class="sd">			BasePhyloWriter.__init__ (self, d)</span>
+<span class="sd">			</span>
+
+<span class="sd">One weakness of this approach is that mis-spelt dialect options (e.g.</span>
+<span class="sd">&quot;quote_nmaes&quot;) won&#39;t be picked up. </span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># TODO: modify dialect so you can&#39;t merge options that don&#39;t exist? So as to</span>
+<span class="c"># prevent the mispelling problem. </span>
+
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;restructuredtext en&#39;</span>
+
+
+
+<span class="c">### IMPORTS ###</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+   <span class="s">&#39;Dialect&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="c">### CONSTANTS &amp; DEFINES ###</span>
+
+<span class="n">ALLOWED</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">FORBIDDEN</span> <span class="o">=</span> <span class="bp">False</span>
+
+
+<span class="c">### IMPLEMENTATION ###</span>
+
+<div class="viewcode-block" id="Dialect"><a class="viewcode-back" href="../../../../phylo.core.io.html#phylo.core.io.dialect.Dialect">[docs]</a><span class="k">class</span> <span class="nc">Dialect</span> <span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">   A class for collecting reader/writer options.</span>
+
+<span class="sd">   There&#39;s no real need for this class, other than just to aid readability.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="n">defaults</span> <span class="o">=</span> <span class="p">{}</span>
+   <span class="k">def</span> <span class="nf">__init__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+      <span class="n">default_options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+      <span class="n">new_options</span> <span class="o">=</span> <span class="nb">dict</span> <span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+      <span class="n">default_options</span><span class="o">.</span><span class="n">update</span> <span class="p">(</span><span class="n">new_options</span><span class="p">)</span>
+      <span class="nb">dict</span><span class="o">.</span><span class="n">__init__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_options</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
+      <span class="c">#self[&#39;singletons&#39;] = ALLOWED</span>
+
+   <span class="k">def</span> <span class="nf">_validate</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="k">pass</span>
+
+
+
+
+<span class="c">### TEST &amp; DEBUG ###</span>
+</div>
+<span class="k">def</span> <span class="nf">_doctest</span> <span class="p">():</span>
+   <span class="kn">import</span> <span class="nn">doctest</span>
+   <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span> <span class="p">()</span>
+
+
+<span class="c">### MAIN ###</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+   <span class="n">_doctest</span><span class="p">()</span>
+
+
+<span class="c">### END ########################################################################</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Paul Agapow.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

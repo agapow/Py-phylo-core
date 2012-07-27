@@ -464,7 +464,7 @@ class Tree (object):
 		"""
 		Create a node and connect it to the rest of the tree.
 
-		:Params:
+		:Parameters:
 			parent Node
 				The node to connect the new node to. If this is the first node,
 				this argument should be unused.

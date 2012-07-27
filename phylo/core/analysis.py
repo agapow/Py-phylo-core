@@ -1,3 +1,6 @@
+#!/usr/local/bin/python
+# -*- coding: utf-8 -*-
+
 """
 Algorithms and analyses for trees.
 
@@ -102,7 +105,7 @@ def mrca (tree, nodes):
 	"""
 	Find the most recent common ancestor of a set of nodes.
 
-	:Params:
+	:Parameters:
 		tree
 			a rooted phylogenetic tree
 		nodes
@@ -157,7 +160,7 @@ def is_monophyletic (tree, nodes):
 	"""
 	Do these nodes form a coherent subtree with no other tips included?
 
-	:Params:
+	:Parameters:
 		tree
 			a rooted tree
 		nodes
@@ -194,7 +197,7 @@ def evol_history (tree, nodes, rooted=True):
 	"""
 	Calculate evolutionary history in the Nee-May-Faith sense.
 
-	:Params:
+	:Parameters:
 		tree
 			a tree
 
@@ -241,6 +244,69 @@ def rooted_subtree_history (rtree, nodes, inc_root=True):
 	stree = rtree.copy_rooted_subtree (nodes)
 	
 	## Postconditions & return:
+
+def get_centroid_nodes (self):
+		"""
+		Return the nodes which are closest to the tree centroid.
+
+		As per Jordan (1869), the centroid is the point at which the number of
+		nodes on either side are most equal, the best possible balance. A tree
+		will have either one or two centroids. If two, they will be neigbours,
+		and both are returned.
+
+		We calculate this by 'eating away' at the tips of the tree, until only 1
+		or 2 are left. Put another way, we list the nodes and their order,
+		remove the nodes with order 1 and lower the order of any nodes they are
+		attached to, and repeat until 1 or 2 are left.
+
+		There are some apparent conflicts with definition. According to
+		Mathworld, the 'weight' of a node is equal to the distance to the
+		furtherest node, and the centroid is the node with the lowest 'weight'.
+
+		:Returns:
+			A list of the centroids.
+
+		"""
+		## Main:
+		# get a dict of nodes and orders
+		residue_nodes = dict ([(n, self.count_adjacent_nodes (n)) \
+			for n in self.iter_nodes()])
+
+		while (2 < len (residue_nodes)):
+			outer_nodes = [n for n, v in residue_nodes.iteritems() if (v == 1)]
+			for node in outer_nodes:
+				del residue_nodes[node]
+				for neighbour in self.iter_adjacent_nodes (node):
+					if (residue_nodes.has_key (neighbour)):
+						residue_nodes[neighbour] -= 1
+
+		## Return:
+		return residue_nodes.keys()
+
+def get_dists_from_node (self, node, dist_fxn=None):
+		"""
+		Return the distance that nodes lie from a given node.
+
+		"""
+		# TODO: allow multiple nodes?
+		## Preparations:
+		if (dist_fxn is None):
+			dist_fxn = lambda a, b: self.get_distance (a, b)
+		## Main:
+		remaining_nodes = [n for n in self.iter_nodes() if n is not node]
+		pending_nodes = [node]
+		all_nodes = {node: 0}
+		while pending_nodes:
+			curr_node = pending_nodes.pop(0)
+			dist = all_nodes[curr_node]
+			for curr_neighbour in self.iter_adjacent_nodes (curr_node):
+				if (curr_neighbour in remaining_nodes):
+					all_nodes[curr_neighbour] = dist + \
+						dist_fxn (curr_node, curr_neighbour)
+					pending_nodes.append (curr_neighbour)
+					remaining_nodes.remove (curr_neighbour)
+		return all_nodes
+
 
 
 ### END #######################################################################

@@ -273,7 +273,7 @@ class Odict (dict):
 		"""
 		Change the ordering by shifting, items from one end moving to the other.
 		
-		:Params:
+		:Parameters:
 			shift integer
 				Positive shifts move the sequence right, negative to the left.
 		

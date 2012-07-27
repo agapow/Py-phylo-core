@@ -145,7 +145,7 @@ def iter_nodes_subtree_postorder (self, start):
 	"""
 	Traverse nodes postorder (children / tips first) down from this node.
 	
-		:Params:
+		:Parameters:
 			start
 				The node to start traversal from.
 				
@@ -182,7 +182,7 @@ def iter_subtree_preorder (self, start):
 	"""
 	Traverse nodes preorder (ancestors first) down from this node.
 
-		:Params:
+		:Parameters:
 			start
 				The node to start traversal from.
 

@@ -1,0 +1,1038 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>phylo.core.tree &mdash; phylo.core 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="phylo.core 2.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for phylo.core.tree</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A class for phylogenetic trees.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;restructuredtext en&#39;</span>
+
+
+<span class="c">### IMPORTS ###</span>
+
+<span class="kn">from</span> <span class="nn">exceptions</span> <span class="kn">import</span> <span class="ne">NotImplementedError</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="c">#from relais.dev.common import *</span>
+
+<span class="kn">from</span> <span class="nn">phylo.core.impl.odict</span> <span class="kn">import</span> <span class="n">Odict</span>
+<span class="kn">from</span> <span class="nn">node</span> <span class="kn">import</span> <span class="n">Node</span>
+<span class="kn">from</span> <span class="nn">branch</span> <span class="kn">import</span> <span class="n">Branch</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+	<span class="s">&#39;Tree&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="c">### IMPLEMENTATION ###</span>
+
+<div class="viewcode-block" id="Tree"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree">[docs]</a><span class="k">class</span> <span class="nc">Tree</span> <span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	An base class for phylogenetic trees.</span>
+<span class="sd">	</span>
+<span class="sd">	This class encapsulates both rooted and unrooted trees, so the two may be</span>
+<span class="sd">	easily interconverted and compared. As a consequence, not all methods apply </span>
+<span class="sd">	for all instances (e.g. subtree traversal can only be used on rooted</span>
+<span class="sd">	trees). This class can also serves as an interface or base to other, more</span>
+<span class="sd">	specialised tree classes. </span>
+<span class="sd">	</span>
+<span class="sd">	In-order iteration isn&#39;t provided, as it is meaningless outside strictly</span>
+<span class="sd">	bifurcating trees.</span>
+<span class="sd">	</span>
+<span class="sd">	For example::</span>
+<span class="sd">	</span>
+<span class="sd">		# make the tree (A, (B, C))</span>
+<span class="sd">		&gt;&gt;&gt; t = Tree()</span>
+<span class="sd">		&gt;&gt;&gt; t.count_nodes()</span>
+<span class="sd">		0</span>
+<span class="sd">		&gt;&gt;&gt; r, x = t.add_node (None, {&#39;name&#39;: &#39;root&#39;})</span>
+<span class="sd">		&gt;&gt;&gt; a, x = t.add_node (r, {&#39;name&#39;: &#39;A&#39;})</span>
+<span class="sd">		&gt;&gt;&gt; i, x = t.add_node (r, {&#39;name&#39;: &#39;BC&#39;})</span>
+<span class="sd">		&gt;&gt;&gt; b, x = t.add_node (i, {&#39;name&#39;: &#39;B&#39;})</span>
+<span class="sd">		&gt;&gt;&gt; c, x = t.add_node (i, {&#39;name&#39;: &#39;C&#39;})</span>
+<span class="sd">		&gt;&gt;&gt; t.count_nodes()</span>
+<span class="sd">		5</span>
+<span class="sd">		&gt;&gt;&gt; t.count_branches()</span>
+<span class="sd">		4</span>
+<span class="sd">		</span>
+
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="c"># TODO: default node and branch properties for the tree?</span>
+	<span class="c"># TODO: tree should function as factory for b &amp; n to achieve this?</span>
+	<span class="c"># TODO: for rooted trees &amp; some display, nodes have to order. Odict?</span>
+	<span class="c"># TODO: c&#39;tor should provide / allow translation table &amp; impl</span>
+	<span class="c"># TODO: c&#39;tor should provide / allow distance math &amp; default blen?</span>
+
+	<span class="c">## LIFECYCLE:</span>
+	<span class="k">def</span> <span class="nf">__init__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist_type</span><span class="o">=</span><span class="nb">float</span><span class="p">):</span>
+		<span class="c"># nested dict to go from node pairs to branches d[n1][n2] -&gt; b</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="c"># single layer dict to go from branch to nodes d[b] -&gt; (n1, n2)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_branches</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="c"># the tree root if defined</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">=</span> <span class="bp">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_root_branch</span> <span class="o">=</span> <span class="bp">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_dist_type</span> <span class="o">=</span> <span class="n">dist_type</span>
+		
+	<span class="k">def</span> <span class="nf">__del__</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Clean up the tree before deletion.</span>
+<span class="sd">		</span>
+<span class="sd">		This is necessary for piece of mind due to some internal cyclic data</span>
+<span class="sd">		structures. Note that there are circumstances in Python where object</span>
+<span class="sd">		destruction isn&#39;t orderly (e.g. when a session is closed) causing the</span>
+<span class="sd">		issuing of alarming but harmless errors (e.g. &quot;no attribute</span>
+<span class="sd">		called _branches&quot;)  </span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># destroy all references to nodes and branches</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+		<span class="c"># TODO: this is accidentally clearing the nodes not the hash of nodes</span>
+		<span class="c">#for n in self._nodes:</span>
+		<span class="c">#	n.clear()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+	<span class="k">def</span> <span class="nf">__copy__</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return a copy of this tree.</span>
+
+<span class="sd">		This makes a copy of the tree (i.e. the topology). All node and branch</span>
+<span class="sd">		properties are kept and shared between the new and old tree.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: test</span>
+		<span class="n">new_tree</span> <span class="o">=</span> <span class="n">BaseTree</span><span class="p">()</span>
+		<span class="n">new_tree</span><span class="o">.</span><span class="n">_nodes</span><span class="p">,</span> <span class="n">new_tree</span><span class="o">.</span><span class="n">_branches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_copy_nodes_and_branches</span><span class="p">()</span>
+		<span class="k">return</span> <span class="n">new_tree</span>
+	
+	<span class="k">def</span> <span class="nf">__deepcopy__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">visit</span><span class="o">=</span><span class="p">{}):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return a wholly independent copy of this tree.</span>
+
+<span class="sd">		This makes a copy of all tree elements tree (i.e. topology, node and</span>
+<span class="sd">		branch contents).</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c">## Main:</span>
+		<span class="n">new_tree</span> <span class="o">=</span> <span class="n">BaseTree</span><span class="p">()</span>
+		<span class="n">new_tree</span><span class="o">.</span><span class="n">_nodes</span><span class="p">,</span> <span class="n">new_tree</span><span class="o">.</span><span class="n">_branches</span><span class="p">,</span> <span class="n">newold_map</span> <span class="o">=</span> \
+			<span class="bp">self</span><span class="o">.</span><span class="n">_deepcopy_nodes_and_branches</span><span class="p">()</span>
+		<span class="c">## Postconditions &amp; return:</span>
+		<span class="k">return</span> <span class="n">new_tree</span>
+		
+
+	<span class="c">## ACCESSORS:</span>
+	<span class="c"># Tree accessors:</span>
+<div class="viewcode-block" id="Tree.is_rooted"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.is_rooted">[docs]</a>	<span class="k">def</span> <span class="nf">is_rooted</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Is a root defined for this tree?</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: if the root is deleted, this should update</span>
+		<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span>
+		</div>
+<div class="viewcode-block" id="Tree.count_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.count_nodes">[docs]</a>	<span class="k">def</span> <span class="nf">count_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		How many nodes does this tree contain?</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="nb">len</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">)</span>
+</div>
+	<span class="k">def</span> <span class="nf">__len__</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		What size is this tree (how many nodes does it contain)?</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_nodes</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Tree.is_empty"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.is_empty">[docs]</a>	<span class="k">def</span> <span class="nf">is_empty</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Does the tree have no nodes?</span>
+
+<span class="sd">		Then how does it smell?</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">count_nodes</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Tree.count_branches"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.count_branches">[docs]</a>	<span class="k">def</span> <span class="nf">count_branches</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		How many branches does this tree contain?</span>
+
+<span class="sd">		This will be equal to ``count_nodes() - 1``, but we calculate it</span>
+<span class="sd">		independently. Note this doesn&#39;t count any theoretical branch running</span>
+<span class="sd">		off the root.</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="nb">len</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Tree.count_tip_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.count_tip_nodes">[docs]</a>	<span class="k">def</span> <span class="nf">count_tip_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		How many tips / leaves / terminal nodes does this tree have?</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: need count_internal_nodes?</span>
+		<span class="k">return</span> <span class="nb">len</span> <span class="p">([</span><span class="mi">1</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_tip_nodes</span><span class="p">()])</span>
+
+
+	<span class="c"># Node accessors:</span></div>
+<div class="viewcode-block" id="Tree.get_parent"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.get_parent">[docs]</a>	<span class="k">def</span> <span class="nf">get_parent</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return the parent of this node.</span>
+<span class="sd">		</span>
+<span class="sd">		This is an experimental method, to gauge the efficacy of determining</span>
+<span class="sd">		parents on the fly. Parentage throughout a tree is defined solely by</span>
+<span class="sd">		the position of the root and so a lot of internal paperwork can be saved</span>
+<span class="sd">		by *just* recording the root. </span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># NOTE: it may be easier to traverse from the target to the root,</span>
+		<span class="c"># rather than vice-versa</span>
+		<span class="c">## Preconditions:</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_rooted</span><span class="p">()),</span> <span class="s">&quot;this method requires a rooted tree&quot;</span>
+		<span class="c">## Main:</span>
+		<span class="n">prev_node</span> <span class="o">=</span> <span class="bp">None</span>
+		<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_nodes_preorder</span><span class="p">():</span>
+			<span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="ow">is</span> <span class="n">node</span><span class="p">):</span>
+				<span class="k">return</span> <span class="n">prev_node</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">prev_node</span> <span class="o">=</span> <span class="n">n</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="bp">False</span><span class="p">),</span> <span class="s">&quot;node &#39;</span><span class="si">%s</span><span class="s">&#39; is not a member of this tree&quot;</span> <span class="o">%</span> <span class="n">node</span>
+</div>
+<div class="viewcode-block" id="Tree.count_adjacent_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.count_adjacent_nodes">[docs]</a>	<span class="k">def</span> <span class="nf">count_adjacent_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		How many nodes are directly adjacent to this one?</span>
+
+<span class="sd">		In graph theory terms, this gives the *order* of the node.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="nb">len</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">node</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="Tree.is_node_tip"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.is_node_tip">[docs]</a>	<span class="k">def</span> <span class="nf">is_node_tip</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Is this a terminating (leaf) node?</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># NOTE: we allow for singleton root nodes</span>
+		<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">!=</span> <span class="n">node</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">count_adjacent_nodes</span> <span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Tree.get_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.get_nodes">[docs]</a>	<span class="k">def</span> <span class="nf">get_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return the nodes abutting either end of a branch.</span>
+
+<span class="sd">		:Returns:</span>
+<span class="sd">			A tuple of the two nodes. Order is not specified.</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">branch</span><span class="p">]</span>
+
+	<span class="c"># Branch accessors:</span></div>
+<div class="viewcode-block" id="Tree.get_branch"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.get_branch">[docs]</a>	<span class="k">def</span> <span class="nf">get_branch</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return the branch running between two nodes.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">node1</span><span class="p">][</span><span class="n">node2</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="Tree.get_centroid_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.get_centroid_nodes">[docs]</a>	<span class="k">def</span> <span class="nf">get_centroid_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return the nodes which are closest to the tree centroid.</span>
+
+<span class="sd">		As per Jordan (1869), the centroid is the point at which the number of</span>
+<span class="sd">		nodes on either side are most equal, the best possible balance. A tree</span>
+<span class="sd">		will have either one or two centroids. If two, they will be neigbours,</span>
+<span class="sd">		and both are returned.</span>
+
+<span class="sd">		We calculate this by &#39;eating away&#39; at the tips of the tree, until only 1</span>
+<span class="sd">		or 2 are left. Put another way, we list the nodes and their order,</span>
+<span class="sd">		remove the nodes with order 1 and lower the order of any nodes they are</span>
+<span class="sd">		attached to, and repeat until 1 or 2 are left.</span>
+
+<span class="sd">		There are some apparent conflicts with definition. According to</span>
+<span class="sd">		Mathworld, the &#39;weight&#39; of a node is equal to the distance to the</span>
+<span class="sd">		furtherest node, and the centroid is the node with the lowest &#39;weight&#39;.</span>
+
+<span class="sd">		:Returns:</span>
+<span class="sd">			A list of the centroids.</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c">## Main:</span>
+		<span class="c"># get a dict of nodes and orders</span>
+		<span class="n">residue_nodes</span> <span class="o">=</span> <span class="nb">dict</span> <span class="p">([(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_adjacent_nodes</span> <span class="p">(</span><span class="n">n</span><span class="p">))</span> \
+			<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_nodes</span><span class="p">()])</span>
+
+		<span class="k">while</span> <span class="p">(</span><span class="mi">2</span> <span class="o">&lt;</span> <span class="nb">len</span> <span class="p">(</span><span class="n">residue_nodes</span><span class="p">)):</span>
+			<span class="n">outer_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">residue_nodes</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span> <span class="k">if</span> <span class="p">(</span><span class="n">v</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)]</span>
+			<span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">outer_nodes</span><span class="p">:</span>
+				<span class="k">del</span> <span class="n">residue_nodes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+				<span class="k">for</span> <span class="n">neighbour</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_adjacent_nodes</span> <span class="p">(</span><span class="n">node</span><span class="p">):</span>
+					<span class="k">if</span> <span class="p">(</span><span class="n">residue_nodes</span><span class="o">.</span><span class="n">has_key</span> <span class="p">(</span><span class="n">neighbour</span><span class="p">)):</span>
+						<span class="n">residue_nodes</span><span class="p">[</span><span class="n">neighbour</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+
+		<span class="c">## Return:</span>
+		<span class="k">return</span> <span class="n">residue_nodes</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Tree.get_dists_from_node"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.get_dists_from_node">[docs]</a>	<span class="k">def</span> <span class="nf">get_dists_from_node</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">dist_fxn</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return the distance that nodes lie from a given node.</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: allow multiple nodes?</span>
+		<span class="c">## Preparations:</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">dist_fxn</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+			<span class="n">dist_fxn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_distance</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+		<span class="c">## Main:</span>
+		<span class="n">remaining_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_nodes</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">node</span><span class="p">]</span>
+		<span class="n">pending_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="p">]</span>
+		<span class="n">all_nodes</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+		<span class="k">while</span> <span class="n">pending_nodes</span><span class="p">:</span>
+			<span class="n">curr_node</span> <span class="o">=</span> <span class="n">pending_nodes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+			<span class="n">dist</span> <span class="o">=</span> <span class="n">all_nodes</span><span class="p">[</span><span class="n">curr_node</span><span class="p">]</span>
+			<span class="k">for</span> <span class="n">curr_neighbour</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_adjacent_nodes</span> <span class="p">(</span><span class="n">curr_node</span><span class="p">):</span>
+				<span class="k">if</span> <span class="p">(</span><span class="n">curr_neighbour</span> <span class="ow">in</span> <span class="n">remaining_nodes</span><span class="p">):</span>
+					<span class="n">all_nodes</span><span class="p">[</span><span class="n">curr_neighbour</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">+</span> \
+						<span class="n">dist_fxn</span> <span class="p">(</span><span class="n">curr_node</span><span class="p">,</span> <span class="n">curr_neighbour</span><span class="p">)</span>
+					<span class="n">pending_nodes</span><span class="o">.</span><span class="n">append</span> <span class="p">(</span><span class="n">curr_neighbour</span><span class="p">)</span>
+					<span class="n">remaining_nodes</span><span class="o">.</span><span class="n">remove</span> <span class="p">(</span><span class="n">curr_neighbour</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">all_nodes</span>
+</div>
+<div class="viewcode-block" id="Tree.subtree"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.subtree">[docs]</a>	<span class="k">def</span> <span class="nf">subtree</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Given a list of nodes, construct a tree consisting of just those nodes.</span>
+<span class="sd">		</span>
+<span class="sd">		Note that this shares the actual nodes and branches with the original</span>
+<span class="sd">		tree. If you want to start messing with it, make a copy.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c">## Main:</span>
+		<span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span> <span class="p">(</span><span class="n">dist_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dist_type</span><span class="p">)</span>
+		
+		<span class="c"># the &quot;solution&quot; - branches will link the nodes, but not in order</span>
+		<span class="n">nodes_in_subtree</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span>
+		<span class="n">branches_in_subtree</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="c"># the nodes still to be fouond or linked into the subtree</span>
+		<span class="n">nodes_to_process</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+		
+		<span class="k">def</span> <span class="nf">extend_path</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+			<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">			Extend the node paths passed by a single node. </span>
+<span class="sd">			</span>
+<span class="sd">			:Parameters:</span>
+<span class="sd">				t</span>
+<span class="sd">					a tree</span>
+<span class="sd">				path</span>
+<span class="sd">					a list of node that traverses the tree</span>
+<span class="sd">					</span>
+<span class="sd">			:Returns:</span>
+<span class="sd">				All paths the original can be grown into</span>
+<span class="sd">					</span>
+<span class="sd">			This extends the path by any means possible and returns a list of the</span>
+<span class="sd">			new paths. It drops those paths that are deadends.</span>
+<span class="sd">			&quot;&quot;&quot;</span>
+			<span class="n">new_paths</span> <span class="o">=</span> <span class="p">[]</span>
+			<span class="n">last</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+			<span class="k">if</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span> <span class="p">(</span><span class="n">p</span><span class="p">):</span>
+				<span class="n">next_to_last</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">next_to_last</span> <span class="o">=</span> <span class="bp">None</span>
+			<span class="k">for</span> <span class="n">next_node</span> <span class="ow">in</span> <span class="n">t</span><span class="o">.</span><span class="n">iter_adjacent_nodes</span> <span class="p">(</span><span class="n">last</span><span class="p">):</span>
+				<span class="k">if</span> <span class="n">next_node</span> <span class="ow">is</span> <span class="n">next_to_last</span><span class="p">:</span>
+					<span class="k">pass</span>
+				<span class="k">else</span><span class="p">:</span>
+					<span class="n">new_paths</span><span class="o">.</span><span class="n">append</span> <span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="p">[</span><span class="n">next_node</span><span class="p">])</span>
+			<span class="k">return</span> <span class="n">new_paths</span>
+		
+		<span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="n">nodes_to_process</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">start</span> <span class="ow">in</span> <span class="n">nodes_in_subtree</span><span class="p">:</span>
+				<span class="k">continue</span>
+			
+			<span class="c"># the list of growing paths</span>
+			<span class="n">paths_to_explore</span> <span class="o">=</span> <span class="p">[[</span><span class="n">start</span><span class="p">]]</span>
+			<span class="n">connected</span> <span class="o">=</span> <span class="bp">False</span>
+			<span class="k">while</span> <span class="n">connected</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">:</span>
+				<span class="n">new_paths</span> <span class="o">=</span> <span class="p">[]</span>
+				<span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">paths_to_explore</span><span class="p">:</span>
+					<span class="n">new_paths</span> <span class="o">+=</span> <span class="n">extend_path</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
+				<span class="k">for</span> <span class="n">np</span> <span class="ow">in</span> <span class="n">new_paths</span><span class="p">:</span>
+					<span class="k">if</span> <span class="n">np</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">nodes_in_subtree</span><span class="p">:</span>
+						<span class="n">nodes_in_subtree</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">np</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+						<span class="n">new_branches</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">np</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">np</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]]</span>
+							 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span> <span class="p">(</span><span class="nb">len</span> <span class="p">(</span><span class="n">np</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+						<span class="n">branches_in_subtree</span><span class="o">.</span><span class="n">extend</span> <span class="p">(</span><span class="n">new_branches</span><span class="p">)</span>
+						<span class="n">connected</span> <span class="o">=</span> <span class="bp">True</span>
+						<span class="k">break</span>
+				<span class="k">if</span> <span class="n">connected</span><span class="p">:</span>
+					<span class="k">break</span>
+				<span class="n">paths_to_explore</span> <span class="o">=</span> <span class="n">new_paths</span>
+				
+		
+		<span class="n">stree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">dist_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dist_type</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes_in_subtree</span><span class="p">:</span>
+			<span class="n">stree</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">Odict</span><span class="p">()</span>
+		<span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">branches_in_subtree</span><span class="p">:</span>
+			<span class="n">n1</span><span class="p">,</span> <span class="n">n2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">b</span><span class="p">]</span>
+			<span class="n">stree</span><span class="o">.</span><span class="n">_link_nodes</span> <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n2</span><span class="p">)</span>
+		
+		<span class="c">## Return:</span>
+		<span class="k">return</span> <span class="n">stree</span>
+</div>
+<div class="viewcode-block" id="Tree.mrca"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.mrca">[docs]</a>	<span class="k">def</span> <span class="nf">mrca</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_rooted</span><span class="p">()),</span> <span class="s">&quot;only works on rooted tree&quot;</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="mi">2</span> <span class="o">&lt;=</span> <span class="nb">len</span> <span class="p">(</span><span class="n">nodes</span><span class="p">)),</span> <span class="s">&quot;need a list of nodes&quot;</span>
+		<span class="c"># make a path from the first node to the root</span>
+		<span class="n">root_path</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="n">curr_node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+		<span class="k">while</span> <span class="n">curr_node</span><span class="p">:</span>
+			<span class="n">root_path</span><span class="o">.</span><span class="n">append</span> <span class="p">(</span><span class="n">curr_node</span><span class="p">)</span>
+			<span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parent</span> <span class="p">(</span><span class="n">curr_node</span><span class="p">)</span>
+			
+		
+
+		
+
+	</div>
+<div class="viewcode-block" id="Tree.calc_evol_history"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.calc_evol_history">[docs]</a>	<span class="k">def</span> <span class="nf">calc_evol_history</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">rooted</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Calculate evolutionary history in the Nee-May-Faith sense.</span>
+<span class="sd">		</span>
+<span class="sd">		If `rooted`, include the root. Note that the nodes do not have to be tips,</span>
+<span class="sd">		but can be internal.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="n">rooted</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">):</span>
+			<span class="n">nodes</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">]</span>
+		<span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subtree</span> <span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+		<span class="n">x</span> <span class="o">=</span> <span class="nb">sum</span> <span class="p">([</span><span class="n">b</span><span class="o">.</span><span class="n">distance</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">iter_branches</span><span class="p">()])</span>
+		<span class="k">return</span> <span class="n">x</span>
+		
+</div>
+<div class="viewcode-block" id="Tree.is_monophyletic"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.is_monophyletic">[docs]</a>	<span class="k">def</span> <span class="nf">is_monophyletic</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tips</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Does the list of tips form a coherent subtree with no other tips included?</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subtree</span> <span class="p">(</span><span class="n">tips</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tips_subtended</span> <span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">root</span><span class="p">):</span>
+			<span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tips</span><span class="p">:</span>
+				<span class="k">return</span> <span class="bp">False</span>
+		<span class="k">return</span> <span class="bp">True</span>
+		
+
+</div>
+<div class="viewcode-block" id="Tree.get_tips_subtended"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.get_tips_subtended">[docs]</a>	<span class="k">def</span> <span class="nf">get_tips_subtended</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		How many tip nodes eventually derive from this node.</span>
+
+<span class="sd">		We define tips to subtend themselves (and therefore be valued as 1) and</span>
+<span class="sd">		the &#39;center&#39; of the tree to subtend all tips.</span>
+
+<span class="sd">		:Returns:</span>
+<span class="sd">			A dictionary of node - number of tips.</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: should be iter_subtree_tips?</span>
+		<span class="c">## Preparations:</span>
+
+		<span class="c">## Main:</span>
+		<span class="kn">from</span> <span class="nn">triters</span> <span class="kn">import</span> <span class="n">iter_nodes_postorder</span>
+		<span class="n">tips_subtended</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">iter_nodes_postorder</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="p">):</span>
+			<span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_node_tip</span> <span class="p">(</span><span class="n">node</span><span class="p">)):</span>
+				<span class="n">tips_subtended</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">sum_tips</span> <span class="o">=</span> <span class="mi">0</span>
+				<span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_adjacent_nodes</span> <span class="p">(</span><span class="n">node</span><span class="p">):</span>
+					<span class="n">sum_tips</span> <span class="o">+=</span> <span class="n">tips_subtended</span><span class="o">.</span><span class="n">get</span> <span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+				<span class="n">tips_subtended</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_tips</span>
+		<span class="k">return</span> <span class="n">tips_subtended</span>
+</div>
+<div class="viewcode-block" id="Tree.get_distance_from_node"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.get_distance_from_node">[docs]</a>	<span class="k">def</span> <span class="nf">get_distance_from_node</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">dist_fxn</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return the distance that nodes lie from a given node.</span>
+
+<span class="sd">		By definition, the node itself lies 0 distance.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: allow multiple nodes?</span>
+		<span class="c">## Preparations:</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">dist_fxn</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+			<span class="n">dist_fxn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_distance</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+		<span class="c">## Main:</span>
+		<span class="n">dist_from_center</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_nodes_preorder</span> <span class="p">(</span><span class="n">center</span><span class="p">):</span>
+				<span class="n">sum_dist</span> <span class="o">=</span> <span class="mf">0.0</span>
+				<span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_adjacent_nodes</span> <span class="p">(</span><span class="n">node</span><span class="p">):</span>
+					<span class="k">if</span> <span class="n">dist_from_center</span><span class="o">.</span><span class="n">has_key</span> <span class="p">(</span><span class="n">parent</span><span class="p">):</span>
+						<span class="n">sum_dist</span> <span class="o">=</span> <span class="n">dist_from_center</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span> <span class="o">+</span> \
+							<span class="n">dist_fxn</span> <span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+				<span class="n">dist_from_center</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_dist</span>
+		<span class="k">return</span> <span class="n">dist_from_center</span>
+
+	<span class="c">## MUTATORS:</span></div>
+<div class="viewcode-block" id="Tree.unroot"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.unroot">[docs]</a>	<span class="k">def</span> <span class="nf">unroot</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="bp">None</span>
+		</div>
+<div class="viewcode-block" id="Tree.add_node"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.add_node">[docs]</a>	<span class="k">def</span> <span class="nf">add_node</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">node_props</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">distance</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+			<span class="n">branch_props</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Create a node and connect it to the rest of the tree.</span>
+
+<span class="sd">		:Parameters:</span>
+<span class="sd">			parent Node</span>
+<span class="sd">				The node to connect the new node to. If this is the first node,</span>
+<span class="sd">				this argument should be unused.</span>
+
+<span class="sd">			dist</span>
+<span class="sd">				The distance of the newly created branch between the parent and</span>
+<span class="sd">				new node. If this is the first node, this argument should be</span>
+<span class="sd">				unused.</span>
+
+<span class="sd">			node_props dict or mapping</span>
+<span class="sd">				Annotations on the newly created node.</span>
+
+<span class="sd">			branch_props dict or mapping</span>
+<span class="sd">				Annotations on the newly created branch between the parent and</span>
+<span class="sd">				new node. If this is the first node, this argument should be</span>
+<span class="sd">				unused.</span>
+
+<span class="sd">		:Returns:</span>
+<span class="sd">			The newly created node.</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c">## Preconditions:</span>
+		<span class="c"># if this is the first node, don&#39;t need parent or branch_props</span>
+		<span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">count_nodes</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+			<span class="k">assert</span> <span class="p">((</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">branch_props</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)),</span> \
+				<span class="s">&quot;no branch can be created for initial node&quot;</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_first_node</span> <span class="p">(</span><span class="n">node_props</span><span class="p">),</span> <span class="bp">None</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">assert</span> <span class="p">(</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">),</span> \
+				<span class="s">&quot;Subsequent nodes must be connected to the rest of the tree&quot;</span>
+			<span class="n">new_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_node</span> <span class="p">(</span><span class="n">node_props</span><span class="p">)</span>
+			<span class="n">new_branch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_branch</span> <span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">branch_props</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_link_nodes</span> <span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">new_branch</span><span class="p">,</span> <span class="n">new_node</span><span class="p">)</span>
+			<span class="k">return</span> <span class="n">new_node</span><span class="p">,</span> <span class="n">new_branch</span>
+</div>
+<div class="viewcode-block" id="Tree.add_first_node"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.add_first_node">[docs]</a>	<span class="k">def</span> <span class="nf">add_first_node</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_props</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Create the first node in the tree.</span>
+
+<span class="sd">		A convenience method wrapping ``add_node``, given that its arguments</span>
+<span class="sd">		concerning branches are not used when creating the first node.</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: accept a distance and use it as a node annotation on the root?</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_node</span> <span class="p">(</span><span class="n">node_props</span><span class="p">)</span>
+		</div>
+<div class="viewcode-block" id="Tree.add_root"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.add_root">[docs]</a>	<span class="k">def</span> <span class="nf">add_root</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_props</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Create the first node in a rooted tree.</span>
+
+<span class="sd">		A convenience method wrapping ``add_node``, given that its arguments</span>
+<span class="sd">		concerning branches are not used when creating the first node. It also</span>
+<span class="sd">		sets this first node as the root.</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_first_node</span> <span class="p">(</span><span class="n">node_props</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">root</span>
+		<span class="k">return</span> <span class="n">root</span>	
+</div>
+<div class="viewcode-block" id="Tree.insert_node_between"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.insert_node_between">[docs]</a>	<span class="k">def</span> <span class="nf">insert_node_between</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">node_props</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">distance</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+			<span class="n">branch_props</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Insert a node between the two given.</span>
+
+<span class="sd">		In other programs, this is referred to as bisect. It behaves like the</span>
+<span class="sd">		other node creation functions, and asides from the insertion, does not</span>
+<span class="sd">		alter the tree structure (i.e. branchlengths on other nodes are not</span>
+<span class="sd">		touched). The child node (the one being inserted above), stays the same</span>
+<span class="sd">		distance away from the new node as it was from its old parent. In effect</span>
+<span class="sd">		this stretches away the node below with the introduction of the new.</span>
+
+<span class="sd">		While we talk here about placing a new node above a child and below it&#39;s</span>
+<span class="sd">		parent, this usage is arbitrary. By swapping the order of the nodes, the</span>
+<span class="sd">		same distance could be maintained from the parent to the new node.</span>
+<span class="sd">		Note that currently ordering is not maintained.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># NOTE: parent --(new_branch)--&gt; new_node --(old_branch)--&gt; child</span>
+		<span class="c"># do upper (new) branch</span>
+		<span class="n">new_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_node</span> <span class="p">(</span><span class="n">node_props</span><span class="p">)</span>
+		<span class="n">new_branch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_branch</span> <span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">branch_props</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_link_nodes</span> <span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">new_branch</span><span class="p">,</span> <span class="n">new_node</span><span class="p">)</span>
+		<span class="c"># move lower (old) branch</span>
+		<span class="n">old_branch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">parent</span><span class="p">][</span><span class="n">child</span><span class="p">]</span>
+		<span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">parent</span><span class="p">][</span><span class="n">child</span><span class="p">]</span>
+		<span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">child</span><span class="p">][</span><span class="n">parent</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">new_node</span><span class="p">][</span><span class="n">child</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">child</span><span class="p">][</span><span class="n">new_node</span><span class="p">]</span> <span class="o">=</span> <span class="n">old_branch</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">old_branch</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_node</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
+		<span class="c">## Return:</span>
+		<span class="k">return</span> <span class="n">new_node</span>
+</div>
+<div class="viewcode-block" id="Tree.collapse_node_into"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.collapse_node_into">[docs]</a>	<span class="k">def</span> <span class="nf">collapse_node_into</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dead_node</span><span class="p">,</span> <span class="n">new_neighbour</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Remove a node, moving any connections to a given neighbour.</span>
+<span class="sd">		</span>
+<span class="sd">		This is intended for use in creating polytomies, or destroying singletons</span>
+<span class="sd">		that may create algorithmic problems or internal nodes that may not exist.</span>
+<span class="sd">		The opposite of `insert_node`, this essentially &quot;retracts&quot; a node</span>
+<span class="sd">		into its parent, swapping it for its children. This is exactly like</span>
+<span class="sd">		collapsing into a polytomy. In effect the branch connecting the child</span>
+<span class="sd">		to the parent disappears.</span>
+<span class="sd">		This deletes a node and its branch to another node while preserving</span>
+<span class="sd">		all other objects by reconnecting them to that neighbour. For example,</span>
+<span class="sd">		given nodes ``{X, A, B, C}`` where ``A``, ``B`` and ``C`` are connected to ``X`` by branches</span>
+<span class="sd">		a, b &amp; c respectively::</span>
+<span class="sd">		</span>
+<span class="sd">			collapse_into (X, A)</span>
+<span class="sd">			</span>
+<span class="sd">		would result in the deletion of ``X`` and ``a``, with nodes ``B`` &amp; ``C`` now adjacent</span>
+<span class="sd">		``A`` with branches ``b`` &amp; ``c``.</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: allow for distance transformation</span>
+		<span class="c"># TODO: assert connection?</span>
+		<span class="c">## Main:</span>
+		<span class="c"># gather the nodes &amp; branches to be preserved</span>
+		<span class="n">neighbours</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_adjacent_nodes</span> <span class="p">(</span><span class="n">dead_node</span><span class="p">)]</span>
+		<span class="n">branches</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_unlink_nodes</span> <span class="p">(</span><span class="n">dead_node</span><span class="p">,</span> <span class="n">neighbour</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">neighbours</span><span class="p">]</span>
+		<span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span> <span class="p">(</span><span class="n">neighbours</span><span class="p">,</span> <span class="n">branches</span><span class="p">):</span>
+			<span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">new_neighbour</span><span class="p">):</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">_link</span> <span class="p">(</span><span class="n">new_neighbour</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Tree.add_nodes_from"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.add_nodes_from">[docs]</a>	<span class="k">def</span> <span class="nf">add_nodes_from</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nested_seq</span><span class="p">,</span> <span class="n">node_props_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dist_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">branch_props_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Add nodes and branches from a series of nested sequences.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: allow adding for mappings?</span>
+		<span class="c"># TODO: allow appending onto pre-existing nodes? Needs a start-point.</span>
+		<span class="c"># TODO: allow functions as non-callables (constants) and wrap?</span>
+		<span class="c">## Preconditions &amp; preparations:</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">node_props_fn</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+			<span class="n">node_props_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">None</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">dist_fn</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+			<span class="n">dist_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">None</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">branch_props_fn</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+			<span class="n">branch_props_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">None</span>
+		<span class="c">## Main:</span>
+		<span class="n">initial_node</span> <span class="o">=</span> <span class="n">add_first_node</span> <span class="p">(</span><span class="n">node_props_fn</span> <span class="p">(</span><span class="n">nested_seq</span><span class="p">))</span>
+		<span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">nested_seq</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_add_nodes_from_seq</span> <span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">node_props_fn</span><span class="p">,</span>
+				<span class="n">dist_fn</span><span class="p">,</span> <span class="n">branch_props_fn</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Tree.clear"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.clear">[docs]</a>	<span class="k">def</span> <span class="nf">clear</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Empty the tree, removing all nodes and branches.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># NOTE: this may be needed to break circular references</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+		<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+			<span class="n">item</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+		</div>
+<div class="viewcode-block" id="Tree.shift_neighbours"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.shift_neighbours">[docs]</a>	<span class="k">def</span> <span class="nf">shift_neighbours</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Change the ordering of connections to adjacent nodes.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: finish</span>
+		<span class="n">num_neighbours</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_neighbours</span> <span class="p">(</span><span class="n">node</span><span class="p">)</span>
+		<span class="n">shift</span> <span class="o">=</span> <span class="n">shift</span> <span class="o">%</span> <span class="n">num_neighbours</span>
+
+	<span class="c">## ITERATORS &amp; TRAVERSAL</span>
+	<span class="c"># Across the whole tree</span>
+	</div>
+<div class="viewcode-block" id="Tree.iter_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.iter_nodes">[docs]</a>	<span class="k">def</span> <span class="nf">iter_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Traverse all nodes in the tree.</span>
+
+<span class="sd">		The order of iteration isn&#39;t guaranteed to be consistent.</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="o">.</span><span class="n">iterkeys</span><span class="p">():</span>
+			<span class="k">yield</span> <span class="n">n</span>
+</div>
+<div class="viewcode-block" id="Tree.iter_tips"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.iter_tips">[docs]</a>	<span class="k">def</span> <span class="nf">iter_tips</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Traverse all tips in the tree.</span>
+
+<span class="sd">		The order of iteration isn&#39;t guaranteed to be consistent.</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="o">.</span><span class="n">iterkeys</span><span class="p">():</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_node_tip</span> <span class="p">(</span><span class="n">n</span><span class="p">):</span>
+				<span class="k">yield</span> <span class="n">n</span>
+</div>
+<div class="viewcode-block" id="Tree.iter_branches"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.iter_branches">[docs]</a>	<span class="k">def</span> <span class="nf">iter_branches</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Traverse all branches in the tree.</span>
+
+<span class="sd">		The order of iteration isn&#39;t guaranteed to be consistent.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="o">.</span><span class="n">iterkeys</span><span class="p">():</span>
+			<span class="k">yield</span> <span class="n">b</span>
+</div>
+<div class="viewcode-block" id="Tree.tips"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.tips">[docs]</a>	<span class="k">def</span> <span class="nf">tips</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_tips</span><span class="p">()]</span>
+</div>
+<div class="viewcode-block" id="Tree.nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.nodes">[docs]</a>	<span class="k">def</span> <span class="nf">nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+	
+	
+	<span class="c"># In relation to a given node</span>
+	</div>
+<div class="viewcode-block" id="Tree.parent_node"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.parent_node">[docs]</a>	<span class="k">def</span> <span class="nf">parent_node</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return the parent of this node, or None if root.</span>
+<span class="sd">		</span>
+<span class="sd">		Note: only sensible if tree is rooted.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">neighbours</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">neighbours</span><span class="p">):</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">None</span>
+	</div>
+<div class="viewcode-block" id="Tree.iter_child_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.iter_child_nodes">[docs]</a>	<span class="k">def</span> <span class="nf">iter_child_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Traverse all direct children of a node.</span>
+<span class="sd">		</span>
+<span class="sd">		Note that unlike other iterators, this requires a explicit starting</span>
+<span class="sd">		node.</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c">## Preconditions &amp; preparation:</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">),</span> <span class="s">&quot;this method requires a rooted tree&quot;</span>
+		<span class="c">## Main:</span>
+		<span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parent</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_adjacent_nodes</span> <span class="p">(</span><span class="n">n</span><span class="p">):</span>
+			<span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="n">parent</span><span class="p">:</span>
+				<span class="k">continue</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="k">yield</span> <span class="n">c</span>
+		</div>
+<div class="viewcode-block" id="Tree.iter_adjacent_nodes"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.tree.Tree.iter_adjacent_nodes">[docs]</a>	<span class="k">def</span> <span class="nf">iter_adjacent_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Traverse directly adjacent nodes. </span>
+
+<span class="sd">		See `iter_nodes` for further notes.</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+			<span class="k">yield</span> <span class="n">n</span>
+	
+	
+	<span class="c">## INTERNALS</span></div>
+	<span class="k">def</span> <span class="nf">_copy_nodes_and_branches</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return copies of the node and branch data structures.</span>
+
+<span class="sd">		Internal method, for use in copying the tree. Nodes and branches</span>
+<span class="sd">		are left alone, only the topology is copied. This is written as a</span>
+<span class="sd">		separate method for possible use in derived classes.</span>
+
+<span class="sd">		:Returns:</span>
+<span class="sd">			The node and branch dictionaries.</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># copy topology from previous tree, keeping nodes and branches</span>
+		<span class="n">node_dict</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">branch_dict</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">neighbour_dict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+			<span class="n">new_neighbours</span> <span class="o">=</span> <span class="p">{}</span>
+			<span class="k">for</span> <span class="n">neighbour</span><span class="p">,</span> <span class="n">branch</span> <span class="ow">in</span> <span class="n">neighbour_dict</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+				<span class="n">new_neighbours</span><span class="p">[</span><span class="n">neighbour</span><span class="p">]</span> <span class="o">=</span> <span class="n">branch</span>
+				<span class="n">branch_dict</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">branch</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">neighbour</span><span class="p">)</span>
+			<span class="n">node_dict</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_neighbours</span>
+		<span class="k">return</span> <span class="n">node_dict</span><span class="p">,</span> <span class="n">branch_dict</span>
+	
+	<span class="k">def</span> <span class="nf">_deepcopy_nodes_and_branches</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Return deepcopies of the node and branch data structures.</span>
+
+<span class="sd">		Internal method, for use in deepcopying the tree. All nodes and branches</span>
+<span class="sd">		are new and independent of the originals. This is written as a separate</span>
+<span class="sd">		method for possible use in derived classes.</span>
+
+<span class="sd">		:Returns:</span>
+<span class="sd">			The node and branch dictionaries and a dictionary mapping the</span>
+<span class="sd">			original nodes to the new ones.</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: test</span>
+		<span class="c"># TODO: copy property values as well?</span>
+		<span class="c">## Main:</span>
+		<span class="c"># create cache to map old objects to new</span>
+		<span class="n">copied_objs</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="k">def</span> <span class="nf">get_copy</span> <span class="p">(</span><span class="n">orig_obj</span><span class="p">):</span>
+			<span class="n">new_obj</span> <span class="o">=</span> <span class="n">copied_objs</span><span class="o">.</span><span class="n">get</span> <span class="p">(</span><span class="n">orig_obj</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+			<span class="k">if</span> <span class="p">(</span><span class="n">new_obj</span> <span class="o">==</span> <span class="bp">None</span><span class="p">):</span>
+				<span class="n">new_obj</span> <span class="o">=</span> <span class="n">deepcopy</span> <span class="p">(</span><span class="n">orig_obj</span><span class="p">)</span>
+				<span class="n">copied_objs</span><span class="p">[</span><span class="n">orig_obj</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_obj</span>
+			<span class="k">return</span> <span class="n">new_obj</span>
+		<span class="c"># reconstruct data structures, replacing old objs with new</span>
+		<span class="n">node_dict</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">branch_dict</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">neighbour_dict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+			<span class="n">new_node</span> <span class="o">=</span> <span class="n">get_copy</span> <span class="p">(</span><span class="n">node</span><span class="p">)</span>
+			<span class="n">new_neighbours</span> <span class="o">=</span> <span class="p">{}</span>
+			<span class="k">for</span> <span class="n">neighbour</span><span class="p">,</span> <span class="n">branch</span> <span class="ow">in</span> <span class="n">neighbour_dict</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+				<span class="n">new_neigh</span> <span class="o">=</span> <span class="n">get_copy</span> <span class="p">(</span><span class="n">neighbour</span><span class="p">)</span>
+				<span class="n">new_branch</span> <span class="o">=</span> <span class="n">get_copy</span> <span class="p">(</span><span class="n">branch</span><span class="p">)</span>
+				<span class="n">new_neighbours</span><span class="p">[</span><span class="n">new_neigh</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_branch</span>
+				<span class="n">branch_dict</span><span class="p">[</span><span class="n">new_branch</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_node</span><span class="p">,</span> <span class="n">new_neigh</span><span class="p">)</span>
+			<span class="n">node_dict</span><span class="p">[</span><span class="n">new_node</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_neighbours</span>
+		<span class="c">## Postconditions &amp; return:</span>
+		<span class="k">return</span> <span class="n">node_dict</span><span class="p">,</span> <span class="n">branch_dict</span><span class="p">,</span> <span class="n">copied_objs</span>
+	
+	<span class="k">def</span> <span class="nf">_get_root</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span>
+	
+	<span class="k">def</span> <span class="nf">_set_root</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_root</span><span class="p">):</span>
+		<span class="c">## Preconditions:</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="n">new_root</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">new_root</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">),</span> \
+			<span class="s">&quot;can&#39;t set </span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">) as tree root&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span> <span class="p">(</span><span class="n">new_root</span><span class="p">),</span> <span class="n">new_root</span><span class="p">)</span>
+		<span class="c">## Main:</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">=</span> <span class="n">new_root</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_reroot_tree</span><span class="p">()</span>
+		
+	<span class="n">root</span> <span class="o">=</span> <span class="nb">property</span> <span class="p">(</span><span class="n">_get_root</span><span class="p">,</span> <span class="n">_set_root</span><span class="p">)</span>
+	
+	<span class="k">def</span> <span class="nf">_reroot_tree</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		&#39;Rehang&#39; a tree so the nodes correctly point to their parent.</span>
+<span class="sd">		</span>
+<span class="sd">		When a tree is rerooted, the parent-child relationship between</span>
+<span class="sd">		two nodes may reverse. This internal method should be called after</span>
+<span class="sd">		a rerooting to ensure every node is pointing at the right parent.</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: should branches store direction information too?</span>
+		<span class="k">def</span> <span class="nf">rehang_children</span> <span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+			<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">			Direct all children of a node to point to it. </span>
+<span class="sd">			</span>
+<span class="sd">			We move out recursively from the new root, resetting nodes, and pass</span>
+<span class="sd">			the parent of this node to ensure it is not reset.</span>
+<span class="sd">			</span>
+<span class="sd">			&quot;&quot;&quot;</span>
+			<span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">iter_adjacent_nodes</span> <span class="p">(</span><span class="n">node</span><span class="p">):</span>
+				<span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">parent</span><span class="p">:</span>
+					<span class="n">indx</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">iter_adjacent_nodes</span> <span class="p">(</span><span class="n">c</span><span class="p">)]</span><span class="o">.</span><span class="n">index</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span>
+					<span class="n">tree</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">rotate</span> <span class="p">(</span><span class="o">-</span><span class="n">indx</span><span class="p">)</span>
+					<span class="n">rehang_children</span> <span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+			
+		<span class="n">rehang_children</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+	
+		
+		
+	<span class="k">def</span> <span class="nf">_create_node</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">props</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Make a node and record supporting data.</span>
+
+<span class="sd">		Internal method: instantiates the node and makes a slot in the internal</span>
+<span class="sd">		node dictionary.</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">props</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+			<span class="n">new_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">()</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">new_node</span> <span class="o">=</span> <span class="n">Node</span> <span class="p">(</span><span class="n">props</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">new_node</span><span class="p">]</span> <span class="o">=</span> <span class="n">Odict</span><span class="p">()</span>
+		<span class="k">return</span> <span class="n">new_node</span>
+
+	<span class="k">def</span> <span class="nf">_create_branch</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distance</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">props</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Make a branch and record supporting data.</span>
+
+<span class="sd">		Internal method: instantiates the branch, makes a slot in the internal</span>
+<span class="sd">		branch dictionary, and stores the branch in nodes dict for the nodes at</span>
+<span class="sd">		both ends.</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">props</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+			<span class="n">new_branch</span> <span class="o">=</span> <span class="n">Branch</span> <span class="p">()</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">new_branch</span> <span class="o">=</span> <span class="n">Branch</span> <span class="p">(</span><span class="n">props</span><span class="p">)</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">distance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
+			<span class="n">new_branch</span><span class="p">[</span><span class="s">&#39;distance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">distance</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">new_branch</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+		<span class="k">return</span> <span class="n">new_branch</span>
+
+	<span class="k">def</span> <span class="nf">_link_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_1</span><span class="p">,</span> <span class="n">branch</span><span class="p">,</span> <span class="n">node_2</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Record the data that links the parent and child nodes via the branch.</span>
+<span class="sd">		</span>
+<span class="sd">		This internal method performs the low-level &#39;linking&#39; of two nodes</span>
+<span class="sd">		via a branch. Notice that that all objects (nodes and branches) are presumed to</span>
+<span class="sd">		already exist and that incautious use can lead to trees with cycles.</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># TODO: can we keep track of nodes in only 1 way, rather than both ways</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">branch</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">node_1</span><span class="p">,</span> <span class="n">node_2</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">node_2</span><span class="p">][</span><span class="n">node_1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">node_1</span><span class="p">][</span><span class="n">node_2</span><span class="p">]</span> <span class="o">=</span> <span class="n">branch</span>
+
+	<span class="k">def</span> <span class="nf">_unlink_nodes</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_1</span><span class="p">,</span> <span class="n">node_2</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Break the connection between two nodes.</span>
+<span class="sd">		</span>
+<span class="sd">		This internal method is intended for low-level deletion of topology.</span>
+<span class="sd">		It destroys the implementation details that link the two nodes and will result</span>
+<span class="sd">		in the deletion of the connecting branch and either of the nodes, if they are</span>
+<span class="sd">		not referred to elsewhere. Notice that incaustious use can lead to the cleaving</span>
+<span class="sd">		of a tree into unconnected nodes.</span>
+<span class="sd">		 </span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">old_branch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">node_1</span><span class="p">][</span><span class="n">node_2</span><span class="p">]</span>
+		<span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">node_1</span><span class="p">][</span><span class="n">node_2</span><span class="p">]</span>
+		<span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">node_2</span><span class="p">][</span><span class="n">node_1</span><span class="p">]</span>
+		<span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">old_branch</span><span class="p">]</span>
+		<span class="k">return</span> <span class="n">old_branch</span>
+
+	<span class="k">def</span> <span class="nf">_validate</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		A self diagnosis function that checks the tree is in a valid state.</span>
+
+<span class="sd">		This is intended for use during development, so various tree-building</span>
+<span class="sd">		and reading functions can be tested to check they are internally</span>
+<span class="sd">		consistent and correct. It is not intended to be fast or computationally</span>
+<span class="sd">		cheap.</span>
+
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># check branch data correlates with nodes</span>
+		<span class="k">for</span> <span class="n">branch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_branches</span><span class="p">():</span>
+			<span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_nodes</span> <span class="p">(</span><span class="n">branch</span><span class="p">)</span>
+			<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">a</span><span class="p">]</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">b</span><span class="p">)),</span> <span class="s">&quot;a doesn&#39;t have b as neighbour&quot;</span>
+			<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">a</span><span class="p">)),</span> <span class="s">&quot;b doesn&#39;t have a as neighbour&quot;</span>
+			<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">a</span><span class="p">][</span><span class="n">b</span><span class="p">]</span> <span class="ow">is</span> <span class="n">branch</span><span class="p">),</span> <span class="s">&quot;ab doesn&#39;t link to branch&quot;</span>
+			<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">b</span><span class="p">][</span><span class="n">a</span><span class="p">]</span> <span class="ow">is</span> <span class="n">branch</span><span class="p">),</span> <span class="s">&quot;ba doesn&#39;t link to branch&quot;</span>
+
+		<span class="c"># check node data correlates with each other and branches</span>
+		<span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_nodes</span><span class="p">():</span>
+			<span class="n">neighbours</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+			<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">neighbours</span><span class="p">:</span>
+				<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">node</span><span class="p">)),</span> <span class="s">&quot;neighbour doesn&#39;t link to node&quot;</span>
+				<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="n">node</span><span class="p">]),</span> <span class="s">&quot;node and neighbour don&#39;t agree on branch&quot;</span>
+				<span class="n">branch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="n">n</span><span class="p">]</span>
+				<span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="o">.</span><span class="n">has_key</span> <span class="p">(</span><span class="n">branch</span><span class="p">)),</span> <span class="s">&quot;branch is not stored&quot;</span>
+				<span class="k">assert</span> <span class="p">(</span><span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">branch</span><span class="p">]),</span> <span class="s">&quot;node not linked by branch&quot;</span>
+				<span class="k">assert</span> <span class="p">(</span><span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">branch</span><span class="p">]),</span> <span class="s">&quot;neighbour not linked by branch&quot;</span>
+
+	<span class="k">def</span> <span class="nf">_dump</span> <span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		A crude function to aid debugging structural problems</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+		<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_nodes</span><span class="p">():</span>
+			<span class="n">n</span><span class="p">[</span><span class="s">&#39;_dumpid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">i</span>
+			<span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+		<span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_branches</span><span class="p">():</span>
+			<span class="n">b</span><span class="p">[</span><span class="s">&#39;_dumpid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;b</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">i</span>
+			<span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+		<span class="k">print</span> <span class="p">(</span><span class="s">&quot;Nodes:&quot;</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+			<span class="k">print</span> <span class="p">(</span><span class="s">&quot;* dumpid </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">get</span> <span class="p">(</span><span class="s">&#39;_dumpid&#39;</span><span class="p">),</span> <span class="n">n</span><span class="p">))</span>
+			<span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+				<span class="k">print</span> <span class="p">(</span><span class="s">&quot;   - </span><span class="si">%s</span><span class="s"> (branch </span><span class="si">%s</span><span class="s">, dist </span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get</span> <span class="p">(</span><span class="s">&#39;_dumpid&#39;</span><span class="p">),</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span> <span class="p">(</span><span class="s">&#39;_dumpid&#39;</span><span class="p">),</span> <span class="n">b</span><span class="o">.</span><span class="n">distance</span><span class="p">))</span>
+		<span class="k">print</span> <span class="p">(</span><span class="s">&quot;Branches:&quot;</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">node_list</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+			<span class="k">print</span> <span class="p">(</span><span class="s">&quot;* dumpid </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">get</span> <span class="p">(</span><span class="s">&#39;_dumpid&#39;</span><span class="p">),</span> <span class="n">b</span><span class="p">))</span>
+			<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node_list</span><span class="p">:</span>
+				<span class="k">print</span> <span class="p">(</span><span class="s">&quot;   - </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">n</span><span class="o">.</span><span class="n">get</span> <span class="p">(</span><span class="s">&#39;_dumpid&#39;</span><span class="p">))</span>
+				
+
+
+<span class="c">### TEST &amp; DEBUG ###</span>
+</div>
+<span class="k">def</span> <span class="nf">_doctest</span> <span class="p">():</span>
+	<span class="kn">import</span> <span class="nn">doctest</span>
+	<span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span> <span class="p">()</span>
+
+
+<span class="c">### MAIN ###</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+	<span class="n">_doctest</span><span class="p">()</span>
+
+
+<span class="c">### END ########################################################################</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Paul Agapow.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
