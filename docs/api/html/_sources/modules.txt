@@ -5,3 +5,5 @@ phylo.core
    :maxdepth: 4
 
    phylo
+   setup
+   tests

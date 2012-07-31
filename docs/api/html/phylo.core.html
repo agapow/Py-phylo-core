@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="phylo.core 2.0 documentation" href="index.html" />
     <link rel="next" title="impl Package" href="phylo.core.impl.html" />
-    <link rel="prev" title="io Package" href="phylo.core.io.html" /> 
+    <link rel="prev" title="test_impl Package" href="tests.test_impl.html" /> 
   </head>
   <body>
     <div class="related">
@@ -43,7 +43,7 @@
           <a href="phylo.core.impl.html" title="impl Package"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="phylo.core.io.html" title="io Package"
+          <a href="tests.test_impl.html" title="test_impl Package"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">phylo.core 2.0 documentation</a> &raquo;</li> 
       </ul>
@@ -146,8 +146,10 @@ internal nodes that have only two neighbours, i.e. where a node has
 given rise to a single other node. This function checks for those
 exceptions by counting neighbours. Again, there is an complexity in the
 case of rooted trees, as the root has an inferred extra neighbour.</p>
-<p>Note: there must be a technical term for this but I haven&#8217;t found
-it.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">there must be a technical term for this but I haven&#8217;t found</p>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -300,7 +302,34 @@ separate implementations for rooted and unrooted trees aren&#8217;t needed.</p>
 <dl class="method">
 <dt id="phylo.core.branch.Branch.set_distance">
 <tt class="descname">set_distance</tt><big>(</big><em>val</em><big>)</big><a class="reference internal" href="_modules/phylo/core/branch.html#Branch.set_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.branch.Branch.set_distance" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Determine if all elements in the source sequence satisfy a condition.</p>
+<p>All of the source sequence will be consumed.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This method uses immediate execution.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>predicate</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; An optional single argument function used to test each
+elements. If omitted, the bool() function is used resulting in
+the elements being tested directly.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">True if all elements in the sequence meet the predicate condition,
+otherwise False.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><ul class="first last simple">
+<li>ValueError - If the Queryable is closed()</li>
+<li>TypeError - If predicate is not callable.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </dd></dl>
 
@@ -717,7 +746,10 @@ node.</p>
 <dt id="phylo.core.tree.Tree.parent_node">
 <tt class="descname">parent_node</tt><big>(</big><em>n</em><big>)</big><a class="reference internal" href="_modules/phylo/core/tree.html#Tree.parent_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.tree.Tree.parent_node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the parent of this node, or None if root.</p>
-<p>Note: only sensible if tree is rooted.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">only sensible if tree is rooted.</p>
+</div>
 </dd></dl>
 
 <dl class="attribute">
@@ -925,8 +957,8 @@ the head of the tree.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="phylo.core.io.html"
-                        title="previous chapter">io Package</a></p>
+  <p class="topless"><a href="tests.test_impl.html"
+                        title="previous chapter">test_impl Package</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="phylo.core.impl.html"
                         title="next chapter">impl Package</a></p>
@@ -965,7 +997,7 @@ the head of the tree.</p>
           <a href="phylo.core.impl.html" title="impl Package"
              >next</a> |</li>
         <li class="right" >
-          <a href="phylo.core.io.html" title="io Package"
+          <a href="tests.test_impl.html" title="test_impl Package"
              >previous</a> |</li>
         <li><a href="index.html">phylo.core 2.0 documentation</a> &raquo;</li> 
       </ul>

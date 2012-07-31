@@ -53,6 +53,27 @@ class Branch (PropertyList):
 		return self.get ('distance', default)
 
 	def set_distance (self, val):
+		"""
+		Determine if all elements in the source sequence satisfy a condition.
+
+		All of the source sequence will be consumed.
+
+		Note: This method uses immediate execution.
+
+		Args:
+			predicate (callable) : An optional single argument function used to test each
+				elements. If omitted, the bool() function is used resulting in
+				the elements being tested directly.
+
+		Returns:
+			True if all elements in the sequence meet the predicate condition,
+			otherwise False.
+
+		Raises:
+			ValueError: If the Queryable is closed()
+			TypeError: If predicate is not callable.
+		   
+      """
 		self['distance'] = val
 		
 	distance = property (get_distance, set_distance)

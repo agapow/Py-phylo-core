@@ -1,65 +1,158 @@
 Documenting a Python module with Sphinx
+=======================================
+
+I used to use Epydoc to generate API docs for my Python packages. However, time passed, Epydoc stopped being supported and started generating errors. (It's since been taken over and become PyDoctor.) The documentation tool Sphinx arose. Apart from being the new hotness, Sphinx offers certain advantages:
+
+* It's the semi-official, informal standard for Python documentation
+
+* Various websites expect or leverage Sphinc documentation (ReadTheDocs etc.)
+
+* It can be used to generate and include a wider variety of documents than just API
+
+* It supports a large number of output formats
+
+* There's a growing body of specialised extensions
+
+Thus, it's time to shift all the documentation to Sphinx. However, there's a few problems:
+
+* Although there's a lot (A LOT) of Sphinc documentation, relatively little of it is devoted to generating API documentation
+
+* That which does concern API documentation seems to be curiously long-winded (e.g. manually listing every module and every class within those mdoules you want documented, rather them picked by parsed automagically)
+
+* There's few, simple straightforward examples of API generation
+
+Hence, this is a checklist of steps to easily generate API docs via Sphinx. This is just one way of doing it. Many variations - minor or otherwise - are possible.
 
 
-Assumptions
+Assumptions & caveats
+---------------------
 
 * You're using Sphinx 1.1 or better
 
 * Your module is laid out in the traditional way (setup.py, docs, tests, etc.)
 
-Steps
 
-Create the project and working directories with:
+Documentation format
+--------------------
+
+Sphinx (or rather sphinx-apidoc) will extract docstrings from your code. On the simplest level, any docstring in restructured text format will do. However two particular syntaxes enjoy a higher level of support: "sphinx" and "google" forms. The Sphinx form, to my eye, is intricate and opaque in the pure-text form. Thus, the Google form is to be preferred.
+
+Document modules thus::
+
+  .. module:: useful_1
+     :platform: Unix, Windows
+     :synopsis: A useful module indeed.
+
+  .. moduleauthor:: Andrew Carter <andrew@invalid.com>
+
+
+Document functions thus::
+
+  This function does something.
+
+  Args:
+    name (str):  The name to use.
+
+  Kwargs:
+    state (bool): Current state to be in.
+
+  Returns:
+    int.  The return code
+
+  Raises:
+    AttributeError, KeyError
+
+  A really great idea.  A way you might use me is
+
+  >>> print public_fn_with_googley_docstring(name='foo', state=None)
+  0
+
+  BTW, this always returns 0.  **NEVER** use with :class:`MyPublicClass`.
+
+Note that arg / kwarg entries are given as ``name (type): description`` where the type is optional. 
+
+The text between colons are called "roles" in restructured text. Useful ones are:
+
+  :mod:
+  :func:
+  :class:
+
+
+
+.. note:: Epydoc restructured format produces an acceptable output.
+
+.. note:: A interesting alternative is `cartouche <https://code.google.com/p/cartouche/>`__ which puports to transfrom reasonmably plaintext docstrings (suitable for the inbuilt python help function) into restructured text. However, this
+ maynot work with apidoc.
+
+
+Generating documentation
+------------------------
+
+Create the project and working directories with::
 
 	% sphinx-quickstart
 
 Answer the questions with:
 
-	root path: your document directory, where the working dirs and output will
-appear
-	seperate source of build: yes
-	Add sphinc extensions: intersphinx
-	create makefile: yes
+	root path
+    I sguggest using your document directory, where the working dirs and output will appear
+	seperate source of build
+    yes
+	add sphinx extensions
+    any you wish, but I suggest including intersphinx
+	create makefile
+    yes
 
-Cd into the root directory. 
+Chamge into the root directory you specified. Edit the Makefile if needed:
 
-Edit the Makefile if needed:
+	PAPER
+    set to ``a4``
+	BUILDIR
+    rename to something other than ``build`` if required (also rename dir)
 
-	PAPER: set to a4
-	BUILDIR: rename to something other than build if required (also rename dir)
+Generate the api documentation::
 
-Generate the api documentation
+	% sphinx-apidoc -f -H foo -o source ..
 
-	% sphinx-apidoc -f -H phylo.core -o source ..
+This will run over your module and generate a bunch of ``rst`` files containing extracted docstrings from your module. The options used mean::
 
-This will:
+	-f
+    overwrite any existing files
+	-H foo
+    names the documentation as ``foo``
+	-o source
+    produce output in the ``source`` directory
+	..
+    search the directory above for modules
 
-	-f: overwrite any existing files
-	-H foo: names the module as foo
-	-o source: produce output in the source directory
-	..: search teh directory above for modules
+.. note:: This will also read in the tests and setup packaages. I'm unclear on how this
+can be avoided
 
-Note that this will also read in the tests and setup packaages. Unclear on how
-can be avoid.
+.. note:: apidoc is the big recent innovation in recent versions of Sphinx for documenting code. Prior to that you had to use ``automodule`` and the like which required the manual listing of every enetity you wanted to document.
 
 Edit source/index.rst to include:
 
-   11 .. toctree::
-   12    :maxdepth: 2
-   13 
-   14    modules.rst
-   15    phylo.core.rst
-   16    phylo.core.io
-   17 
-   18 
+  .. toctree::
+     :maxdepth: 2
+  
+      modules.rst
+      foo.bar.db
+      foo.bar.io
 
   Or whatever modules you want included
 
 
-  SOurce/conf.py can eb editted to show
+  ``Source/conf.py`` can be editted to show
 
   	version
   	project title
   	generate module index
 
+
+References
+----------
+
+* `An example PyPi project <http://packages.python.org/an_example_pypi_project/sphinx.html>``__: how to construct a python package, including documentaion with Sphinx. Note: doesn't use apidoc
+
+* `Minimal Sphinx setup for autodocumenting Python modules <http://scienceoss.com/minimal-sphinx-setup-for-autodocumenting-python-modules/>`__ Note: doesn't use apidoc
 
