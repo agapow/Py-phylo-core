@@ -60,7 +60,7 @@ class Branch (PropertyList):
 
 		Note: This method uses immediate execution.
 
-		Args:
+		Parameters:
 			predicate (callable) : An optional single argument function used to test each
 				elements. If omitted, the bool() function is used resulting in
 				the elements being tested directly.
@@ -72,7 +72,7 @@ class Branch (PropertyList):
 		Raises:
 			ValueError: If the Queryable is closed()
 			TypeError: If predicate is not callable.
-		   
+
       """
 		self['distance'] = val
 		

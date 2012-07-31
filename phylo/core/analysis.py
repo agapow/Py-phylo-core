@@ -197,7 +197,7 @@ def evol_history (tree, nodes, rooted=True):
 	"""
 	Calculate evolutionary history in the Nee-May-Faith sense.
 
-	:Parameters:
+	Parameters:
 		tree
 			a tree
 

@@ -112,7 +112,7 @@ Chamge into the root directory you specified. Edit the Makefile if needed:
 
 Generate the api documentation::
 
-	% sphinx-apidoc -f -H foo -o source ..
+	% sphinx-apidoc -f -H foo -o source ../foo
 
 This will run over your module and generate a bunch of ``rst`` files containing extracted docstrings from your module. The options used mean::
 
@@ -122,8 +122,8 @@ This will run over your module and generate a bunch of ``rst`` files containing 
     names the documentation as ``foo``
 	-o source
     produce output in the ``source`` directory
-	..
-    search the directory above for modules
+	../foo
+    search the directory above for modules, or find the module at ../foo
 
 .. note:: This will also read in the tests and setup packaages. I'm unclear on how this
 can be avoided
