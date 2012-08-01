@@ -303,24 +303,20 @@ separate implementations for rooted and unrooted trees aren&#8217;t needed.</p>
 <p class="first admonition-title">Note</p>
 <p class="last">This method uses immediate execution.</p>
 </div>
-<dl class="docutils">
-<dt>Parameters:</dt>
-<dd><dl class="first last docutils">
-<dt>predicate (callable) <span class="classifier-delimiter">:</span> <span class="classifier">An optional single argument function used to test each</span></dt>
-<dd>elements. If omitted, the bool() function is used resulting in
-the elements being tested directly.</dd>
-</dl>
-</dd>
-</dl>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">True if all elements in the sequence meet the predicate condition,
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>predicate</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; An optional single argument function used to test each
+elements. If omitted, the bool() function is used resulting in
+the elements being tested directly.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">True if all elements in the sequence meet the predicate condition,
 otherwise False.</p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><ul class="first last simple">
 <li>ValueError - If the Queryable is closed()</li>
 <li>TypeError - If predicate is not callable.</li>
 </ul>
@@ -916,7 +912,7 @@ the head of the tree.</p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="phylo.core.impl.html">impl Package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="phylo.core.impl.html#id1"><tt class="docutils literal"><span class="pre">impl</span></tt> Package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="phylo.core.impl.html#odict-module"><tt class="docutils literal"><span class="pre">_odict</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phylo.core.impl.html#module-phylo.core.impl._odict"><tt class="docutils literal"><span class="pre">_odict</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="phylo.core.impl.html#module-phylo.core.impl.odict"><tt class="docutils literal"><span class="pre">odict</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="phylo.core.impl.html#module-phylo.core.impl.propertylist"><tt class="docutils literal"><span class="pre">propertylist</span></tt> Module</a></li>
 </ul>

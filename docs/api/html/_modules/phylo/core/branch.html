@@ -104,6 +104,27 @@
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span> <span class="p">(</span><span class="s">&#39;distance&#39;</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Branch.set_distance"><a class="viewcode-back" href="../../../phylo.core.html#phylo.core.branch.Branch.set_distance">[docs]</a>	<span class="k">def</span> <span class="nf">set_distance</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Determine if all elements in the source sequence satisfy a condition.</span>
+
+<span class="sd">		All of the source sequence will be consumed.</span>
+
+<span class="sd">		Note: This method uses immediate execution.</span>
+
+<span class="sd">		Args:</span>
+<span class="sd">			predicate (callable) : An optional single argument function used to test each</span>
+<span class="sd">				elements. If omitted, the bool() function is used resulting in</span>
+<span class="sd">				the elements being tested directly.</span>
+
+<span class="sd">		Returns:</span>
+<span class="sd">			True if all elements in the sequence meet the predicate condition,</span>
+<span class="sd">			otherwise False.</span>
+
+<span class="sd">		Raises:</span>
+<span class="sd">			ValueError: If the Queryable is closed()</span>
+<span class="sd">			TypeError: If predicate is not callable.</span>
+
+<span class="sd">      &quot;&quot;&quot;</span>
 		<span class="bp">self</span><span class="p">[</span><span class="s">&#39;distance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
 		</div>
 	<span class="n">distance</span> <span class="o">=</span> <span class="nb">property</span> <span class="p">(</span><span class="n">get_distance</span><span class="p">,</span> <span class="n">set_distance</span><span class="p">)</span>

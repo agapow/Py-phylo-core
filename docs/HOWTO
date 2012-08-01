@@ -1,27 +1,37 @@
 Documenting a Python module with Sphinx
 =======================================
 
-I used to use Epydoc to generate API docs for my Python packages. However, time passed, Epydoc stopped being supported and started generating errors. (It's since been taken over and become PyDoctor.) The documentation tool Sphinx arose. Apart from being the new hotness, Sphinx offers certain advantages:
+I used to use Epydoc to generate API docs for my Python packages. However, time
+passed, Epydoc stopped being supported and started generating errors. (It's
+since been taken over and become PyDoctor.) The documentation tool Sphinx arose.
+Apart from being the new hotness, Sphinx offers certain advantages:
 
 * It's the semi-official, informal standard for Python documentation
 
-* Various websites expect or leverage Sphinc documentation (ReadTheDocs etc.)
+* Various websites expect or leverage Sphinx documentation (ReadTheDocs etc.)
 
-* It can be used to generate and include a wider variety of documents than just API
+* It can be used to generate and include a wider variety of documents than just
+* API
 
 * It supports a large number of output formats
 
 * There's a growing body of specialised extensions
 
-Thus, it's time to shift all the documentation to Sphinx. However, there's a few problems:
+Thus, it's time to shift all the documentation to Sphinx. However, there's a few
+problems:
 
-* Although there's a lot (A LOT) of Sphinc documentation, relatively little of it is devoted to generating API documentation
+* Although there's a lot (A LOT) of Sphinx documentation, relatively little of
+* it is devoted to generating API documentation
 
-* That which does concern API documentation seems to be curiously long-winded (e.g. manually listing every module and every class within those mdoules you want documented, rather them picked by parsed automagically)
+* That which does concern API documentation seems to be curiously long-winded
+* (e.g. manually listing every module and every class within those mdoules you
+* want documented, rather them picked by parsed automagically)
 
 * There's few, simple straightforward examples of API generation
 
-Hence, this is a checklist of steps to easily generate API docs via Sphinx. This is just one way of doing it. Many variations - minor or otherwise - are possible.
+Hence, this is a checklist of steps to easily generate API docs via Sphinx. This
+is just one way of doing it. Many variations - minor or otherwise - are
+possible.
 
 
 Assumptions & caveats
@@ -31,11 +41,25 @@ Assumptions & caveats
 
 * Your module is laid out in the traditional way (setup.py, docs, tests, etc.)
 
+.. warning::
+
+   These notes are from my own explorations and tinkering and so may be in error
+or misinformed. Set me straight if you know better.
+
 
 Documentation format
 --------------------
 
-Sphinx (or rather sphinx-apidoc) will extract docstrings from your code. On the simplest level, any docstring in restructured text format will do. However two particular syntaxes enjoy a higher level of support: "sphinx" and "google" forms. The Sphinx form, to my eye, is intricate and opaque in the pure-text form. Thus, the Google form is to be preferred.
+Sphinx (or rather sphinx-apidoc) will extract docstrings from your code. On the
+simplest level, any docstring in restructured text format will do. However two
+particular syntaxes enjoy a higher level of support: "sphinx" and "google"
+forms. The Sphinx form, to my eye, is intricate and opaque in the pure-text
+form. Thus, the Google form is to be preferred.
+
+
+General format
+~~~~~~~~~~~~~
+
 
 Document modules thus::
 
@@ -45,8 +69,33 @@ Document modules thus::
 
   .. moduleauthor:: Andrew Carter <andrew@invalid.com>
 
+Text in docstrings can be annotated with restructured text "roles" (those
+colon-flanked terms) to cross-link to other entries or be otherwise handled
+specially. Useful ones are:
 
-Document functions thus::
+  :mod:
+  :func:
+  :class:
+
+
+Google format
+~~~~~~~~~~~~
+
+Sphinx doesn't specify what "google format" means, but the examples seem to
+resembles that given on Google style pages.
+
+Classes are documented::
+
+	Summary of class here.
+
+	Longer class information....
+	Longer class information....
+
+	Attributes:
+		likes_spam: A boolean indicating if we like SPAM or not.
+		eggs: An integer count of the eggs we have laid.
+
+Functions are documented thus::
 
   This function does something.
 
@@ -69,20 +118,65 @@ Document functions thus::
 
   BTW, this always returns 0.  **NEVER** use with :class:`MyPublicClass`.
 
-Note that arg / kwarg entries are given as ``name (type): description`` where the type is optional. 
+Some notes:
 
-The text between colons are called "roles" in restructured text. Useful ones are:
+* arg / kwarg entries are given as ``name (type): description`` where the type
+* is optional. 
 
-  :mod:
-  :func:
-  :class:
+* "Kwargs" doesn't appear in the Google style sheet and named arguments seem to
+  be fine in the "Args" section.
+* "Yields" might be a substitute for "Returns" for generators.
+* The variable length args and kwargs should be named as ``*args`` and
+* ``**kwargs``
+* Note the codeblock isn't indented
 
 
 
-.. note:: Epydoc restructured format produces an acceptable output.
+Epydoc
+~~~~~
 
-.. note:: A interesting alternative is `cartouche <https://code.google.com/p/cartouche/>`__ which puports to transfrom reasonmably plaintext docstrings (suitable for the inbuilt python help function) into restructured text. However, this
- maynot work with apidoc.
+Epydoc-flavoured restructured format produces an acceptable output. There is an
+extension for incorporating it into Sphinx documents.
+
+
+Cartouche
+~~~~~~~~
+
+A interesting alternative is the Sphinx extension `cartouche
+<https://code.google.com/p/cartouche/>`__
+which puports to transfrom reasonmably plaintext docstrings (suitable for the
+inbuilt
+python help function) into restructured text. However, the plugin is alpha
+quality and documentation is minimal.
+
+The provided example is::
+
+	Determine if all elements in the source sequence satisfy a condition.
+
+	All of the source sequence will be consumed.
+
+	Note: This method uses immediate execution.
+
+	Args:
+		predicate (callable) : An optional single argument function used to test
+each
+			elements. If omitted, the bool() function is used resulting in
+			the elements being tested directly.
+	
+	Returns:
+		True if all elements in the sequence meet the predicate condition,
+		otherwise False.
+
+	Raises:
+		ValueError: If the Queryable is closed()
+		TypeError: If predicate is not callable.
+
+By experimentation, the vital parts of the format appear to be:
+
+* The lists named ``Args``, ``Returns`` and ``Raises``, which are turned into
+  the appropriately formatted code documentation structures.
+* The formatting of the individual list items
+* ``Note`` which turns inot an admonition
 
 
 Generating documentation
@@ -94,43 +188,60 @@ Create the project and working directories with::
 
 Answer the questions with:
 
-	root path
-    I sguggest using your document directory, where the working dirs and output will appear
-	seperate source of build
-    yes
-	add sphinx extensions
-    any you wish, but I suggest including intersphinx
-	create makefile
-    yes
+   root path
+      I suggest using your document directory, where the working dirs and output
+will appear
+   separate source of build
+      yes
+   add sphinx extensions
+      any you wish, but I suggest including intersphinx
+   create makefile
+      yes
 
-Chamge into the root directory you specified. Edit the Makefile if needed:
+Change into the root directory you specified. Edit the Makefile if needed:
 
-	PAPER
+  PAPER
     set to ``a4``
-	BUILDIR
+  BUILDIR
     rename to something other than ``build`` if required (also rename dir)
 
 Generate the api documentation::
 
 	% sphinx-apidoc -f -H foo -o source ../foo
 
-This will run over your module and generate a bunch of ``rst`` files containing extracted docstrings from your module. The options used mean::
+This will run over your module and generate a bunch of ``rst`` files containing
+extracted docstrings from your module. The options used mean::
 
-	-f
+  -f
     overwrite any existing files
-	-H foo
+  -H foo
     names the documentation as ``foo``
-	-o source
+  -o source
     produce output in the ``source`` directory
-	../foo
-    search the directory above for modules, or find the module at ../foo
+	..
+    search the directory above for modules
 
-.. note:: This will also read in the tests and setup packaages. I'm unclear on how this
-can be avoided
+.. note::
+	This will also read in the ``tests`` and ``setup.py`` packages if these exist
+	in the root of your package. I'm unclear on how this
+	can best be avoided. The final argument to apidoc (``..`` as above) can be
+	followed with a number of other arguments that can supposedly exclude.
+However,
+	such arguments are always treated as directories (i.e. you can't pass
+	``setup.py`` to be excluded). Also, apidoc traverses the source directory as
+	an absolute path and only exclude paths that are absolute will be excluded.
+	So, you will have to call::
 
-.. note:: apidoc is the big recent innovation in recent versions of Sphinx for documenting code. Prior to that you had to use ``automodule`` and the like which required the manual listing of every enetity you wanted to document.
+		% sphinx-apidoc -f -H foo -o source .. /home/me/myproject/foo/tests
 
-Edit source/index.rst to include:
+	There's got to be an easier way to do this.
+   
+
+.. note:: apidoc is the big recent innovation in recent versions of Sphinx for
+documenting code. Prior to that you had to use ``automodule`` and the like which
+required the manual listing of every enetity you wanted to document.
+
+Edit source/index.rst to include::
 
   .. toctree::
      :maxdepth: 2
@@ -139,20 +250,48 @@ Edit source/index.rst to include:
       foo.bar.db
       foo.bar.io
 
-  Or whatever modules you want included
+Or whatever modules you want included.
 
+``source/conf.py`` can be editted to show
 
-  ``Source/conf.py`` can be editted to show
+* version
+* project title
+* generate module index
 
-  	version
-  	project title
-  	generate module index
+Finally, you can actually generate your documents. Try::
+
+	% make html
+
+Assorted notes
+--------------
+
+* Sometimes changes you make to documentation (e.g. what files are looked at or
+  included, the actual included text) aren't reflected in the output. Sometimes,
+  Sphinx doesn't seem to realise the source has updated. The easiest way to fix
+  this is to clear out all the cached data and doctrees with ``make clean``.
+
+* Admonitions are useful for highlighting gotchas, warnings and limitations.
+
 
 
 References
 ----------
 
-* `An example PyPi project <http://packages.python.org/an_example_pypi_project/sphinx.html>``__: how to construct a python package, including documentaion with Sphinx. Note: doesn't use apidoc
+* `An example PyPi project
+* <http://packages.python.org/an_example_pypi_project/sphinx.html>`__: how to
+* construct a python package, including documentaion with Sphinx and `example
+* docstrings
+* <http://packages.python.org/an_example_pypi_project/sphinx.html#function-definitions>`__.
+* Note this doesn't use apidoc
 
-* `Minimal Sphinx setup for autodocumenting Python modules <http://scienceoss.com/minimal-sphinx-setup-for-autodocumenting-python-modules/>`__ Note: doesn't use apidoc
+* `Minimal Sphinx setup for autodocumenting Python modules
+* <http://scienceoss.com/minimal-sphinx-setup-for-autodocumenting-python-modules/>`__
+* Note this doesn't use apidoc
+
+* `Google doc string format
+  <http://google-styleguide.googlecode.com/svn/trunk/pyguide.html#Comments>`__.
+
+
+
+
 

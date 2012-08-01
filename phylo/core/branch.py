@@ -60,7 +60,7 @@ class Branch (PropertyList):
 
 		Note: This method uses immediate execution.
 
-		Parameters:
+		Args:
 			predicate (callable) : An optional single argument function used to test each
 				elements. If omitted, the bool() function is used resulting in
 				the elements being tested directly.

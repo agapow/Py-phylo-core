@@ -4,7 +4,7 @@ phylo Package
 :mod:`phylo` Package
 --------------------
 
-.. automodule:: phylo.__init__
+.. automodule:: phylo
     :members:
     :undoc-members:
     :show-inheritance:
