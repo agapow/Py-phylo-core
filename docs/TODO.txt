@@ -1,0 +1,10 @@
+To do
+=====
+
+Possible features and improvements.
+
+* Alternative implementations of tree (for constancy, rapid traversal, etc.)
+
+* A "path" object that traces a series of nodes through a tree. Much like a tree
+  but without a root and all nodes are singletons. Do we really need this?
+

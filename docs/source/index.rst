@@ -9,11 +9,9 @@ Welcome to phylo.core's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 6
 
-   modules.rst
-   phylo.core.rst
-   phylo.core.io
+   phylo
 
 
 

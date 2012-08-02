@@ -1,0 +1,114 @@
+History & design philosophy
+---------------------------
+
+Motivation
+~~~~~~~~~~
+
+I wrote what turned out to be the first version of phylo.core early in 21st
+century, when I needed to do some analysis of tree structure in a Python-driven
+web-service. There were no phylogeny libraries in Python at the time (or at
+least none that I knew of) and so there was no choice but to roll-my-own. In
+time, more functionality was needed (reconstruction, drawing, etc.) and so a
+simple package with little design though behind it sprawled, grew massively
+complicated and inevitably came to be used for other projects.
+
+Eventually, I grew disatisfied with the design and how awkward it made certain
+things I needed to do. Some other packages had cropped up then. However, I was
+mostly interested in "growing" (simulating) trees and manipulating or traversing
+them, which the design and assumptions of other packages made awkward. So, it
+was back to the drawing board.
+
+Under various names, phylo.core iterated through many versions and designs, only
+some of which saw the light of day. Sensible ideas and idioms were adopted and
+later shown in practical use to be flawed, scattered functions were agreggated
+into large cumbersome classes to be later broken up into smaller classes or
+libraries, interfaces have been conceived, implemented and abandoned.
+
+This then, is about the 4th major version of phylo.core, with a lot of thought
+and history behind it. What follows is a jumbled collection of the forces and
+ideas that have driven the development of phylo.core, in no particular order.
+
+
+General principles
+~~~~~~~~~~~~~~~~~~
+
+* We want to build, manipulate and traverse trees as easy as possible
+
+* No artbitrary limits should be placed on tree structure, e.g. requiring
+bifurcation or forbidding polytomies.
+
+* A simple, flexible API and slow performance is better than a complex API and
+  fast performance.
+  
+* The API and tree functions in general should be easily extensible and provide the
+  building blocks for more complicated functionality.
+  
+Some of these will be expanded upon below.
+
+
+Trees: nodes and branches
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An early need was to attach numerous properties to branches and nodes (e.g.
+taxa names, annotations. Thus, it was fairly natural to treat branches and nodes
+as property lists, basically dictionaries. Any name-value pair can be stored in
+these, however a few properties are built in and can return default values:
+``title`` for nodes and ``distance`` (or ``dist``) for branches.
+
+Conversely, we often end up in situations where a single node is shared by
+multiple trees, such as tree networks or an MCMC forest of trees. Further, as
+a tree is reshaped (e.g. prune and reattach, transform, selective kills), the
+topology associated with a given node can change easily. The logical result of this was to divorce nodes and branches from topology and connectivity, leaving the tree to dictate how they are related.
+
+As a consequence, when asking questions about or making changes to a nodes connectivity, these are effected via methods on a tree. While this sometimes feels unnatural, it makes sense: you are altering a tree, not the node.
+
+
+Trees: roots and directionality
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An natural design decision would be to split trees into rooted and unrooted
+classes, given differences in terminology: a node in a rooted tree has children
+and a parent, one in an unrooted tree has neighbours, there are "up" and "down"
+in an rooted tree, while in an unrooted tree there is only "away", etc. 
+
+phylo.core did briefly use this approach, but it was abandoned as it required maintaining two largely identical sets of code and providing interconversion functions. A simpler model was adopted where a tree may nominate a root, which certain traversal methods may use. A root just gives a direction within a tree, it doesn't alter the tree itself.
+
+
+Other tree implementations
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is Python, so we follow the philosophy of duck typing, if it looks like a tree, it's a tree. You shouldn't need to know about its inner working, or have to worry about what class of tree you are using or convert between classes for particular algorithms. A tree is a tree is a tree. 
+
+Alternative implementations of the tree class should be allowed or even encouraged: e.g. a C or Java re-implementation, a version with fast or precomputed traversal but slow building). Similarly, re-implementations (better implementations) of the standard tree should also be encouraged. To this end, a lot of effort has been expended on the base class, striving to keep it as simple as possible so other implementations are easy as possible. (One intermediate version of the standard tree contained over 60 methods. Any alternative implementation would have to duplicate all of these, making size a problem in itself.)
+
+To this end, the tree has been designed in a number of ways:
+
+* The standard tree class is constructed as a series of mixins. Other classes need only re-implement or over-ride the necessary classes. 
+
+
+Inner workings
+~~~~~~~~~~~~~~
+
+Some implementation details are off-limits, irrelevant, paper over platform
+differences and/or are frankly a bit hacky. (Specifically, the implementations
+of property lists - the basis for nodes and branches - and ordered dictionaries
+- used to maintain tree topology.) These are hidden in the sub-module
+phylo.core.impl, are subject to change without notice and should not be touched. 
+
+.. note:: The traditional Python way would be to call this module ``_impl``, but
+	it's unclear if this would be tolerated by import mechanisms.
+
+
+Names
+~~~~~
+
+A lot of effort has gone into naming, so as to make for uniformity, clarity and
+"guessability". The names used are those commonly in phylogenetics, with some borrowing from Dublin Core or other standard schemes or abbreviations. So ``nodes``, ``branch`` (not ``edge``), ``distance`` (not ``weight``), ``title`` (not ``name``), ``description``.
+
+
+
+
+
+
+
+

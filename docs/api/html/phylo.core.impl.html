@@ -47,6 +47,7 @@
           <a href="phylo.core.html" title="core Package"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="phylo.html" >phylo Package</a> &raquo;</li>
           <li><a href="phylo.core.html" accesskey="U">core Package</a> &raquo;</li> 
       </ul>
     </div>  
@@ -164,18 +165,12 @@ In either case, this is followed by:     for k, v in F.items(): od[k] = v</p>
 </div>
 <div class="section" id="module-phylo.core.impl.odict">
 <span id="id2"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">odict</span></tt> Module<a class="headerlink" href="#module-phylo.core.impl.odict" title="Permalink to this headline">¶</a></h2>
-<p>A simple ordered dictionary.</p>
-<p>Within phylo.core this is used to hold node-node relationships, so that a
-consistent order of branches can be kept and manipulated. More complex
-ordered dictionary implementations are possible and available (e.g.
-[vs_odict]__), but this will do for our purposes. The version that crops up in
-Python 2.7 is unsuitable as we need support for Jython and lesser versions.</p>
-<table class="docutils citation" frame="void" id="vs-odict" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label">[vs_odict]</td><td>&#8220;Odict&#8221;. At &lt;<a class="reference external" href="http://www.voidspace.org.uk/python/odict.html">http://www.voidspace.org.uk/python/odict.html</a>&gt;.</td></tr>
-</tbody>
-</table>
+<p>An ordered dictionary.</p>
+<p>Ordered dicts are used in the standard tree to hold topology, so that a
+consistent order of branches can be kept and manipulated. A bit hacky but it works. While an ordered dict is available in Python 2.7+, we have existing
+software running under 2.6 and Jython, which lack a suitable class. Hence, we
+load the official class if available and otherwise drop in a compatiable
+alternative.</p>
 <dl class="class">
 <dt id="phylo.core.impl.odict.Odict">
 <em class="property">class </em><tt class="descclassname">phylo.core.impl.odict.</tt><tt class="descname">Odict</tt><a class="reference internal" href="_modules/phylo/core/impl/odict.html#Odict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phylo.core.impl.odict.Odict" title="Permalink to this definition">¶</a></dt>
@@ -564,6 +559,7 @@ implemented.</p>
           <a href="phylo.core.html" title="core Package"
              >previous</a> |</li>
         <li><a href="index.html">phylo.core 2.0 documentation</a> &raquo;</li>
+          <li><a href="phylo.html" >phylo Package</a> &raquo;</li>
           <li><a href="phylo.core.html" >core Package</a> &raquo;</li> 
       </ul>
     </div>

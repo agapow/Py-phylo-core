@@ -52,36 +52,34 @@
 <span class="c">#!/usr/bin/env python</span>
 <span class="c"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">A simple ordered dictionary.</span>
+<span class="sd">An ordered dictionary.</span>
 
-<span class="sd">Within phylo.core this is used to hold node-node relationships, so that a</span>
-<span class="sd">consistent order of branches can be kept and manipulated. More complex</span>
-<span class="sd">ordered dictionary implementations are possible and available (e.g.</span>
-<span class="sd">[vs_odict]__), but this will do for our purposes. The version that crops up in</span>
-<span class="sd">Python 2.7 is unsuitable as we need support for Jython and lesser versions.</span>
-
-<span class="sd">.. [vs_odict] &quot;Odict&quot;. At &lt;http://www.voidspace.org.uk/python/odict.html&gt;.</span>
-
-<span class="sd">.. &quot;Another Odict&quot;. At &lt;http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/498195&gt;.</span>
-
-<span class="sd">.. &quot;Sequential dictionary&quot;. At &lt;http://home.arcor.de/wolfgang.grafen/Python/Modules/seqdict/Seqdict.html&gt;.</span>
+<span class="sd">Ordered dicts are used in the standard tree to hold topology, so that a</span>
+<span class="sd">consistent order of branches can be kept and manipulated. A bit hacky but it works. While an ordered dict is available in Python 2.7+, we have existing</span>
+<span class="sd">software running under 2.6 and Jython, which lack a suitable class. Hence, we</span>
+<span class="sd">load the official class if available and otherwise drop in a compatiable</span>
+<span class="sd">alternative.</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="c"># TODO: can we default to the python built-in one for 2.7+?</span>
-<span class="c"># TODO: adapt to API of Python 2.7+ OrderedDict. Drop-in replacement available</span>
-<span class="c">#	http://code.activestate.com/recipes/576693/</span>
-
 
 <span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;restructuredtext en&#39;</span>
 
 
 <span class="c">### IMPORTS ###</span>
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
-
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
 	<span class="s">&#39;Odict&#39;</span><span class="p">,</span>
 <span class="p">]</span>
+
+<span class="kn">import</span> <span class="nn">exceptions</span>
+
+<span class="k">try</span><span class="p">:</span>
+	<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span> <span class="k">as</span> <span class="n">Odict</span>
+
+<span class="k">except</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ImportError</span><span class="p">:</span>
+	<span class="kn">from</span> <span class="nn">_odict</span> <span class="kn">import</span> <span class="n">OrderedDict</span> <span class="k">as</span> <span class="n">Odict</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
 
 
 <span class="c">### IMPLEMENTATION ###</span>

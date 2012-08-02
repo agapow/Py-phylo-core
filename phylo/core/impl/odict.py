@@ -1,36 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-A simple ordered dictionary.
+An ordered dictionary.
 
-Within phylo.core this is used to hold node-node relationships, so that a
-consistent order of branches can be kept and manipulated. More complex
-ordered dictionary implementations are possible and available (e.g.
-[vs_odict]__), but this will do for our purposes. The version that crops up in
-Python 2.7 is unsuitable as we need support for Jython and lesser versions.
-
-.. [vs_odict] "Odict". At <http://www.voidspace.org.uk/python/odict.html>.
-
-.. "Another Odict". At <http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/498195>.
-
-.. "Sequential dictionary". At <http://home.arcor.de/wolfgang.grafen/Python/Modules/seqdict/Seqdict.html>.
+Ordered dicts are used in the standard tree to hold topology, so that a
+consistent order of branches can be kept and manipulated. A bit hacky but it works. While an ordered dict is available in Python 2.7+, we have existing
+software running under 2.6 and Jython, which lack a suitable class. Hence, we
+load the official class if available and otherwise drop in a compatiable
+alternative.
 
 """
-# TODO: can we default to the python built-in one for 2.7+?
-# TODO: adapt to API of Python 2.7+ OrderedDict. Drop-in replacement available
-#	http://code.activestate.com/recipes/576693/
-
 
 __docformat__ = 'restructuredtext en'
 
 
 ### IMPORTS ###
 
-from collections import deque
-
 __all__ = [
 	'Odict',
 ]
+
+import exceptions
+
+try:
+	from collections import OrderedDict as Odict
+
+except exceptions.ImportError:
+	from _odict import OrderedDict as Odict
+
+from collections import deque
 
 
 ### IMPLEMENTATION ###

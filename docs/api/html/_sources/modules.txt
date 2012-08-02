@@ -1,8 +1,9 @@
-foo
-===
+phylo.core
+==========
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 8
 
    phylo
    setup
+   tests

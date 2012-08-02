@@ -33,14 +33,6 @@ core Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`path` Module
-------------------
-
-.. automodule:: phylo.core.path
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`tree` Module
 ------------------
 
