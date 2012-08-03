@@ -83,8 +83,22 @@ Alternative implementations of the tree class should be allowed or even encourag
 
 To this end, the tree has been designed in a number of ways:
 
-* The standard tree class is constructed as a series of mixins. Other classes need only re-implement or over-ride the necessary classes. 
+* The standard tree class is constructed as a series of mixins. Other classes need only re-implement or over-ride the necessary classes.
 
+* There is a truly ridiculous amount of functionality that is arguably needed
+  in a tree class. Iterate across all internal nodes postorder ... 
+  
+* Similarly, there 
+
+
+It's worth detailing alternatives that were considered and or abandoned:
+
+* One Big Class: a phylogeny is genuinely a complicated object with a lot of
+  functionality. There aren't any obvious sub-entities that it is composed of (a tree contains nodes but is not made of them) and so a lengthy and complex class is unfortunate but unavoidable. But such `god objects <http://en.wikipedia.org/wiki/God_object>`__ are difficult to understand, hard to modify and tedious to reimplement. 
+  
+* External functions: another solution would be to move code from the tree class to a library of functions and algorithms that are used on trees. For example, iterators could easily be migrated out into another module, with equivalent functionality: ``tree.iter_nodes_postorder()``. would become ``iter_nodes_postorder (tree)``. However, this means that alternative tree implementations would be unable to alter or improve the workings of these functions. However, this migration has been done for the tree analysis algorithms. 
+
+* Strong validity: it would be desirable to prevent bad or malformed trees being constructed, e.g. trees with cycles. However this presents two problems: a "bad" topology may be fine in another context (e.g. polytomies versus required bifurcation) and validation may be computational expensive. In the end, I settled for making it easy to construct valid trees and making hard to construct bad trees.
 
 Inner workings
 ~~~~~~~~~~~~~~

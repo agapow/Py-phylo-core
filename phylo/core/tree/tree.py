@@ -459,70 +459,7 @@ class Tree (object):
 	def unroot (self):
 		self.root = None
 		
-	def add_node (self, parent=None, node_props=None, distance=None,
-			branch_props=None):
-		"""
-		Create a node and connect it to the rest of the tree.
 
-		:Parameters:
-			parent Node
-				The node to connect the new node to. If this is the first node,
-				this argument should be unused.
-
-			dist
-				The distance of the newly created branch between the parent and
-				new node. If this is the first node, this argument should be
-				unused.
-
-			node_props dict or mapping
-				Annotations on the newly created node.
-
-			branch_props dict or mapping
-				Annotations on the newly created branch between the parent and
-				new node. If this is the first node, this argument should be
-				unused.
-
-		:Returns:
-			The newly created node.
-
-		"""
-		## Preconditions:
-		# if this is the first node, don't need parent or branch_props
-		if (self.count_nodes() == 0):
-			assert ((parent is None) and (branch_props is None)), \
-				"no branch can be created for initial node"
-			return self.add_first_node (node_props), None
-		else:
-			assert (parent is not None), \
-				"Subsequent nodes must be connected to the rest of the tree"
-			new_node = self._create_node (node_props)
-			new_branch = self._create_branch (distance, branch_props)
-			self._link_nodes (parent, new_branch, new_node)
-			return new_node, new_branch
-
-	def add_first_node (self, node_props=None):
-		"""
-		Create the first node in the tree.
-
-		A convenience method wrapping ``add_node``, given that its arguments
-		concerning branches are not used when creating the first node.
-
-		"""
-		# TODO: accept a distance and use it as a node annotation on the root?
-		return self._create_node (node_props)
-		
-	def add_root (self, node_props=None):
-		"""
-		Create the first node in a rooted tree.
-
-		A convenience method wrapping ``add_node``, given that its arguments
-		concerning branches are not used when creating the first node. It also
-		sets this first node as the root.
-
-		"""
-		root = self.add_first_node (node_props)
-		self.root = root
-		return root	
 
 	def insert_node_between (self, parent, child, node_props=None, distance=None,
 			branch_props=None):
@@ -811,68 +748,7 @@ class Tree (object):
 	
 		
 		
-	def _create_node (self, props=None):
-		"""
-		Make a node and record supporting data.
 
-		Internal method: instantiates the node and makes a slot in the internal
-		node dictionary.
-		
-		"""
-		if (props is None):
-			new_node = Node()
-		else:
-			new_node = Node (props)
-		self._nodes[new_node] = Odict()
-		return new_node
-
-	def _create_branch (self, distance=None, props=None):
-		"""
-		Make a branch and record supporting data.
-
-		Internal method: instantiates the branch, makes a slot in the internal
-		branch dictionary, and stores the branch in nodes dict for the nodes at
-		both ends.
-		
-		"""
-		if (props is None):
-			new_branch = Branch ()
-		else:
-			new_branch = Branch (props)
-		if (distance is not None):
-			new_branch['distance'] = distance
-		self._branches[new_branch] = None
-		return new_branch
-
-	def _link_nodes (self, node_1, branch, node_2):
-		"""
-		Record the data that links the parent and child nodes via the branch.
-		
-		This internal method performs the low-level 'linking' of two nodes
-		via a branch. Notice that that all objects (nodes and branches) are presumed to
-		already exist and that incautious use can lead to trees with cycles.
-		
-		"""
-		# TODO: can we keep track of nodes in only 1 way, rather than both ways
-		self._branches[branch] = (node_1, node_2)
-		self._nodes[node_2][node_1] = self._nodes[node_1][node_2] = branch
-
-	def _unlink_nodes (self, node_1, node_2):
-		"""
-		Break the connection between two nodes.
-		
-		This internal method is intended for low-level deletion of topology.
-		It destroys the implementation details that link the two nodes and will result
-		in the deletion of the connecting branch and either of the nodes, if they are
-		not referred to elsewhere. Notice that incaustious use can lead to the cleaving
-		of a tree into unconnected nodes.
-		 
-		"""
-		old_branch = self._nodes[node_1][node_2]
-		del self._nodes[node_1][node_2]
-		del self._nodes[node_2][node_1]
-		del self._branches[old_branch]
-		return old_branch
 
 	def _validate (self):
 		"""
