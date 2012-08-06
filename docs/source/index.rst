@@ -11,7 +11,9 @@ Contents:
 .. toctree::
    :maxdepth: 6
 
+	../../README.txt
    phylo
+	DESIGN.txt
 
 
 

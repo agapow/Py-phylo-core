@@ -250,41 +250,7 @@ class Tree (object):
 	## ITERATORS & TRAVERSAL
 	# Across the whole tree
 	
-	def iter_nodes (self):
-		"""
-		Traverse all nodes in the tree.
 
-		The order of iteration isn't guaranteed to be consistent.
-		
-		"""
-		for n in self._nodes.iterkeys():
-			yield n
-
-	def iter_tips (self):
-		"""
-		Traverse all tips in the tree.
-
-		The order of iteration isn't guaranteed to be consistent.
-		
-		"""
-		for n in self._nodes.iterkeys():
-			if self.is_node_tip (n):
-				yield n
-
-	def iter_branches (self):
-		"""
-		Traverse all branches in the tree.
-
-		The order of iteration isn't guaranteed to be consistent.
-		"""
-		for b in self._branches.iterkeys():
-			yield b
-
-	def tips (self):
-		return [t for t in self.iter_tips()]
-
-	def nodes (self):
-		return self._nodes.keys()
 	
 	
 	# In relation to a given node

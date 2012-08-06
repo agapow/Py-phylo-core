@@ -154,6 +154,7 @@ class Tree (IterableTreeMixin):
 		return (len (self) == 0)
 
 	# Tree root accessors:
+	
 	def is_rooted (self):
 		"""
 		Is a root defined for this tree?
@@ -161,6 +162,31 @@ class Tree (IterableTreeMixin):
 		# TODO: if the root is deleted, this should update
 		return (self.root is not None)
 		
+	# Tree content accessors:
+	
+	def iter_nodes (self):
+		"""
+		Traverse all nodes in the tree.
+
+		The order of iteration isn't guaranteed to be consistent.
+		"""
+		for n in self._nodes.keys():
+			yield n
+		
+	nodes = property (lambda s: [n for n in s.iter_nodes()])
+	
+	def iter_branches (self):
+		"""
+		Traverse all branches in the tree.
+
+		The order of iteration isn't guaranteed to be consistent.
+		"""
+		for b in self._branches.iterkeys():
+			yield b
+	
+	branches = property (lambda s: [b for n in s.iter_branches()])
+	
+	
 	# Node accessors:
 	def node_parent (self, node):
 		"""
@@ -183,6 +209,8 @@ class Tree (IterableTreeMixin):
 			else:
 				prev_node = n
 		assert (False), "node '%s' is not a member of this tree" % node
+		
+	def node_children (self, node):
 
 	def node_neighbours (self, node):
 		"""
@@ -197,7 +225,7 @@ class Tree (IterableTreeMixin):
 		Is this a terminating (leaf) node?
 		"""
 		# NOTE: we allow for singleton root nodes
-		return (self._root != node) and (self.count_adjacent_nodes (node) == 1)
+		return (self.root != node) and (len (self.node_neighbours (node)) == 1)
 
 	def get_nodes (self, branch):
 		"""
@@ -217,6 +245,8 @@ class Tree (IterableTreeMixin):
 		return self._nodes[node1][node2]
 
 	## MUTATORS
+	# Tree construction:
+	
 	def add_node (self, parent=None, node_props=None, distance=None,
 			branch_props=None):
 		"""
