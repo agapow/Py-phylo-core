@@ -9,11 +9,13 @@ Welcome to phylo.core's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 6
-
+	:maxdepth: 6
+	
 	../../README.txt
-   phylo
+	phylo
 	DESIGN.txt
+	HISTORY.txt
+	TODO.txt
 
 
 

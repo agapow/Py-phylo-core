@@ -33,10 +33,14 @@ class Tree (IterableTreeMixin):
 	More specifcally, it's the machinery required to store and manipulate nodes
 	and branches. Here it is done as a series of ordered dictionaries, with nodes
 	and branches as keys. This is not especially fast, but is fast enough for
-	most circumstances.
+	most circumstances. Obviously other (faster or better) implementations are possible,
+	for which this can serve as a reference.
 	
-	Obviously other (faster or better) implementations are possible, for which
-	this can serve as a reference.
+	This class allows the following:
+	
+	* construction of a tree topology of nodes and branches
+	* broad querying of tree properties (e.g. the number and a list of nodes)
+	* low level traversal of the tree (e.g. moving from nodes to neighbouring nodes)
 
 	Additional functionality, that uses this core, is bought in from the mixins
 	classes.
