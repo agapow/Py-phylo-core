@@ -10,6 +10,9 @@ implementations.
 
 ### IMPORTS
 
+import itertools
+
+
 ### IMPLEMENTATION ###
 
 ### OVERALL TREE SHAPE
@@ -181,8 +184,8 @@ def is_monophyletic (tree, nodes):
 	# find the common ancestor of the tips
 	m = mrca (tree, nodes)
 	# for every tip descended from it, does it appear in the passed list?
-	iterable = iter_nodes_subtree (tree, m)
-	for t in itertools.ifilter (lambda n: tree.is_tip_node (n), iterable):
+	iterable = tree.iter_nodes_subtree (m)
+	for t in itertools.ifilter (lambda n: tree.is_node_tip (n), iterable):
 	   if t not in nodes:
 	      return False
 	return True

@@ -82,7 +82,6 @@ class IterableTreeMixin (object):
 				continue
 			else:
 				yield c
-
 	
 	
 	### MISC
@@ -127,8 +126,8 @@ class IterableTreeMixin (object):
 		"""
 		# TODO: has this recurse to private function that does assert for efficiency
 		## Preconditions & preparation:
-		assert (tree.is_rooted()), "traversal requires rooted tree"
-		start = start or tree.root
+		assert (self.is_rooted()), "traversal requires rooted tree"
+		start = start or self.root
 		
 		## Main:
 		for child in self.iter_child_nodes (start):
@@ -162,13 +161,13 @@ class IterableTreeMixin (object):
 	
 	### ROOTED (SUBTREE) TRAVERSAL
 	
-	def iter_nodes_subtree (tree, start):
+	def iter_nodes_subtree (self, start):
 		"""
 		Traverse all nodes in a subtree.
 		
 		Note that no consistent order is guaranteed.
 		"""
-		return iter_nodes_subtree_postorder (tree, start)
+		return self.iter_nodes_postorder (start)
 	
 	
 	def iter_nodes_subtree_postorder (self, start):
@@ -190,7 +189,7 @@ class IterableTreeMixin (object):
 		assert (self.is_rooted()), "method requires a rooted tree"
 		
 		## Main:
-		parent = self.get_parent (start)
+		parent = self.node_parent (start)
 		# actually yield nodes
 		for child in self.iter_adjacent_nodes_except (start, parent):
 			for curr_node in self._iter_nodes_postorder_subtree (child, parent):
