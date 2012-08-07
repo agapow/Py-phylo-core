@@ -10,9 +10,6 @@ implementations.
 
 ### IMPORTS
 
-import triters
-
-
 ### IMPLEMENTATION ###
 
 ### OVERALL TREE SHAPE
@@ -31,7 +28,7 @@ def is_bifurcating (tree, assume_root_branch=True):
 	# walk the tree and look for a node that isn't binary
 	root = tree.root
 	for node in tree.iter_nodes():
-		num_neighbours = tree.count_adjacent_nodes (node)
+		num_neighbours = len (tree.node_neighbours (node))
 		# root must have 2 neighbours
 		if (assume_root_branch and (node is root)):
 			if (num_neighbours != 2):
@@ -65,7 +62,7 @@ def has_singletons (tree, assume_root_branch=True):
 	# walk the tree an look for a node that isn't binary
 	root = tree.root
 	for node in tree.iter_nodes():
-		num_neighbours = tree.count_adjacent_nodes (node)
+		num_neighbours = len (tree.node_neighbours (node))
 		if (assume_root_branch and (node is root)):
 			if (num_neighbours == 1):
 				return True
@@ -89,7 +86,7 @@ def has_polytomies (tree, assume_root_branch=True):
 	# walk the tree and look for a node that is higher than order 3
 	root = tree.root
 	for node in tree.iter_nodes():
-		num_neighbours = tree.count_adjacent_nodes (node)
+		num_neighbours = len (tree.node_neighbours (node))
 		if (assume_root_branch and (node is root)):
 			if (2 < num_neighbours):
 				return True
@@ -125,7 +122,7 @@ def mrca (tree, nodes):
 	# We do this by walking from the first node to the root. This gives an
 	# list of possible mrcas. Then we walk up from every other node and
 	# check where they intersect with that list.
-	root_path = [n for n in triters.iter_nodes_to_root (tree, nodes[0])]
+	root_path = [n for n in tree.iter_nodes_to_root (nodes[0])]
 	mrca_or_below = [root_path[0]]
 	possible_higher_mrca = root_path[1:]
 	root = possible_higher_mrca[-1]
@@ -137,7 +134,7 @@ def mrca (tree, nodes):
 			return root
 		# otherwise, walk up to root and see where it intersects previously
 		# explored nodes or the possible higher mrca list		
-		for p in triters.iter_nodes_to_root (tree, n):
+		for p in tree.iter_nodes_to_root (n):
 			if p in mrca_or_below:
 				# this node is below one we have already examined
 				break 

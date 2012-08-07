@@ -21,6 +21,7 @@ from copy import deepcopy
 from phylo.core.impl.odict import Odict
 from node import Node
 from branch import Branch
+from iterable_tree_mixin import IterableTreeMixin
 
 
 ### IMPLEMENTATION ###
@@ -190,31 +191,40 @@ class Tree (IterableTreeMixin):
 	
 	branches = property (lambda s: [b for n in s.iter_branches()])
 	
-	
 	# Node accessors:
+	
 	def node_parent (self, node):
 		"""
 		Return the parent of this node.
 		
-		This is an experimental method, to gauge the efficacy of determining
-		parents on the fly. Parentage throughout a tree is defined solely by
-		the position of the root and so a lot of internal paperwork can be saved
-		by *just* recording the root. 
+		Obviously, this only works for a rooted tree.
 		"""
-		# NOTE: it may be easier to traverse from the target to the root,
-		# rather than vice-versa
+		# XXX: basically, the first neighbour of a node is its parent. This is one of the
+		# reasons we need ordered dicts. All a little fragile and fiddly but it seems to
+		# work. Tried a more sophisticated scheme where parentage was worked out on the
+		# fly, but this turned out to be a good idea (parentage is always defined in
+		# relation to the root) with an unavoidably stupid implementation (you have to
+		# traverse the tree every time).
+		# TODO: is there a dynamic approach where we can cache the results?
 		## Preconditions:
 		assert (self.is_rooted()), "this method requires a rooted tree"
+		
 		## Main:
-		prev_node = None
-		for n in self.iter_nodes_preorder():
-			if (n is node):
-				return prev_node
-			else:
-				prev_node = n
-		assert (False), "node '%s' is not a member of this tree" % node
+		neighbours = self._nodes[node].keys()
+		if len (neighbours):
+			return neighbours[0]
+		else:
+			return None
 		
 	def node_children (self, node):
+		"""
+		Return all the children of the passed node.
+		
+		Obviously, this only works for a rooted tree.
+		"""
+		# NOTE: rootedness asserted in parent method
+		par = self.node_parent (node)
+		return [n for n in self.node_neighbours if n is not par]
 
 	def node_neighbours (self, node):
 		"""
@@ -222,7 +232,9 @@ class Tree (IterableTreeMixin):
 
 		In graph theory terms, this gives the *order* of the node.
 		"""
-		return len (self._nodes[node])
+		return self._nodes[node]
+		
+	node_neighbors = node_neighbours
 
 	def is_node_tip (self, node):
 		"""
@@ -349,9 +361,9 @@ class Tree (IterableTreeMixin):
 			the parent of this node to ensure it is not reset.
 			
 			"""
-			for c in tree.iter_adjacent_nodes (node):
+			for c in tree.node_neighbours (node):
 				if c is not parent:
-					indx = [x for x in tree.iter_adjacent_nodes (c)].index (n)
+					indx = [x for x in tree.node_neighbours (c)].index (n)
 					tree._nodes[c].rotate (-indx)
 					rehang_children (tree, node, c)
 			

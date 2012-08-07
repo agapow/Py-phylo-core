@@ -5,19 +5,16 @@ Tests for 'phylore.core.tree.alg', using nose.
 
 """
 
-
 ### IMPORTS ###
 
 import phylo.core.analysis as alg
-
-import phylo.core.triters as triters
 
 
 ## CONSTANTS & DEFINES ###
 
 ### TESTS ###
 
-class TestAlg (object):
+class TestAnalysis (object):
 
 	def setup(self):
 		# make up a dummy tree to test upon
@@ -32,7 +29,7 @@ class TestAlg (object):
 		g, br = t.add_node (c, {'title': 'G'})
 		self.tree = t
 		# record the nodes for later convenience
-		self.nodes = dict ([(n.title, n) for n in t.nodes()])
+		self.nodes = dict ([(n.title, n) for n in t.nodes])
 
 	
 	def test_mrca (self):

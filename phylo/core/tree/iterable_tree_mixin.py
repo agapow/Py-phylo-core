@@ -30,7 +30,6 @@ __all__ = [
 ]
 
 import itertools
-from tree import Tree
 
 
 ### IMPLEMENTATION ###
@@ -44,7 +43,7 @@ class IterableTreeMixin (object):
 		"""
 		Find the first node that matches the conditional function.
 		"""
-		for n in iter_find_nodes (tree, pred, iter, start=start, stop=stop):
+		for n in tree.iter_find_nodes (pred, iter, start=start, stop=stop):
 			return n
 		return None
 	
@@ -53,7 +52,7 @@ class IterableTreeMixin (object):
 		"""
 		Return a list of all nodes that match the conditional function.
 		"""
-		return [n for n in iter_find_nodes (tree, pred, iter, start=start, stop=stop)]
+		return [n for n in tree.iter_find_nodes (pred, iter, start=start, stop=stop)]
 	
 	
 	def iter_find_nodes (tree, pred, iter=None, start=None, stop=None):
@@ -61,13 +60,29 @@ class IterableTreeMixin (object):
 		Iterate over all nodes that match the conditional function.
 		"""
 		if iter == None:
-			iter = Tree.iter_nodes
+			iter = tree.__class__.iter_nodes
 		if start == None:
 			iterable = iter (tree)
 		else:
-			iterable = iter (tree, start=start, stop=stop) 
+			iterable = iter (tree, start=start, stop=stop)
 		for n in itertools.ifilter (pred, iterable):
 			yield n
+	
+	### 
+	def iter_child_nodes (self, n):
+		"""
+		Iterate across the direct children of a node.
+		"""
+		## Preconditions & preparation:
+		assert (self.is_rooted()), "this method requires a rooted tree"
+		## Main:
+		parent = self.node_parent (n)
+		for c in self.node_neighbours (n):
+			if c is parent:
+				continue
+			else:
+				yield c
+
 	
 	
 	### MISC
@@ -80,7 +95,7 @@ class IterableTreeMixin (object):
 		curr_node = start
 		while curr_node != root:
 			yield curr_node
-			curr_node = tree.parent_node (curr_node)
+			curr_node = tree.node_parent (curr_node)
 		yield root
 		
 	
@@ -110,13 +125,15 @@ class IterableTreeMixin (object):
 		"""
 		Do a postorder (children / tips first) traversal of the nodes.
 		"""
+		# TODO: has this recurse to private function that does assert for efficiency
 		## Preconditions & preparation:
 		assert (tree.is_rooted()), "traversal requires rooted tree"
 		start = start or tree.root
+		
 		## Main:
-		for neighbour in self.iter_child_nodes (start):
-			for child in iter_nodes_postorder (self, neighbour, start):
-				yield child
+		for child in self.iter_child_nodes (start):
+			for desc in self.iter_nodes_postorder (child):
+				yield desc
 		yield start
 	
 		
@@ -125,16 +142,23 @@ class IterableTreeMixin (object):
 		"""
 		Do a postorder (children / tips first) traversal of the nodes.
 		"""
+		# TODO: has this recurse to private function that does assert for efficiency
 		## Preconditions & preparation:
-		assert (tree.is_rooted()), "traversal requires rooted tree"
-		start = start or tree.root
+		assert (self.is_rooted()), "traversal requires rooted tree"
+		start = start or self.root
+		
 		## Main:
 		yield start
-		for neighbour in self.iter_child_nodes (start):
-			for child in self.iter_nodes_preorder (neighbour, start):
-				yield child
+		for child in self.iter_child_nodes (start):
+			for desc in self._iter_nodes_preorder (child, start):
+				yield desc
 	
-	
+	def _iter_nodes_preorder (self, start, parent):
+		yield start
+		for child in self.iter_child_nodes (start):
+			for desc in self._iter_nodes_preorder (child, start):
+				yield desc
+		
 	
 	### ROOTED (SUBTREE) TRAVERSAL
 	
@@ -144,7 +168,7 @@ class IterableTreeMixin (object):
 		
 		Note that no consistent order is guaranteed.
 		"""
-		return iter_nodes_subtree_postorder (tree, start)	
+		return iter_nodes_subtree_postorder (tree, start)
 	
 	
 	def iter_nodes_subtree_postorder (self, start):
@@ -164,6 +188,7 @@ class IterableTreeMixin (object):
 		"""
 		## Preconditions & preparation:
 		assert (self.is_rooted()), "method requires a rooted tree"
+		
 		## Main:
 		parent = self.get_parent (start)
 		# actually yield nodes
@@ -202,7 +227,7 @@ class IterableTreeMixin (object):
 		## Preconditions & preparation:
 		assert (self.is_rooted()), "method requires a rooted tree"
 		## Main:
-		parent = self.parent_node (start)
+		parent = self.node_parent (start)
 		# actually yield nodes
 		yield start
 		for child in self.iter_adjacent_nodes_except (start, parent):

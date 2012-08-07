@@ -37,17 +37,13 @@ class TestTreeTraversal (object):
 	def teardown (self):
 		pass
 	
-	def test_subtree (self):
-		subtree_nodes = [n for n in self.tree.iter_nodes()
-			if n.title in ['A', 'C', 'E']]
-		st = self.tree.subtree (subtree_nodes)
-		st._validate()
-		assert (len(st) == 7)
+#	def test_subtree (self):
+#		subtree_nodes = [n for n in self.tree.iter_nodes()
+#			if n.title in ['A', 'C', 'E']]
+#		st = self.tree.subtree (subtree_nodes)
+#		st._validate()
+#		assert (len(st) == 7)
 		
-	def test_eh (self):
-		subtree_nodes = [n for n in self.tree.iter_nodes()
-			if n.title in ['A', 'C', 'E']]
-		assert (self.tree.calc_evol_history (subtree_nodes) == 8.1)
-		
+
 
 ### END ####################################################################

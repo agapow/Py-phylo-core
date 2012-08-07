@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Representing & manipulating phylogenetic trees.
+Tree and associated classes.
 
 """
 
 __docformat__ = 'restructuredtext en'
-__author__ = "P-M Agapow <pma@agapow.net>"
-__version__ = "0.3"
 
 
 ### IMPORTS ###
+
+from tree import Tree
+from node import Node
+from branch import Branch
 
 
 ### TEST & DEBUG ###

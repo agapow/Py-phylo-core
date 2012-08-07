@@ -1,25 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Tests for 'phylore.core.tree.triters', using nose.
+Tests for 'phylore.core.tree.tree_iteration_mixin', using nose.
 
 """
 
 
 ### IMPORTS ###
 
-import phylo.core.triters as triters
+from phylo.core.tree import Tree
 
 
 ## CONSTANTS & DEFINES ###
 
 ### TESTS ###
 
-class TestTritersFind (object):
+class TestIterationFind (object):
 
 	def setup(self):
 		# create a test tree
-		from phylo.core.tree import Tree
 		t = Tree()
 		a = t.add_root ({'title': 'A'})
 		b, br = t.add_node (a, {'title': 'B'})
@@ -32,29 +31,29 @@ class TestTritersFind (object):
 
 	
 	def test_find_node (self):
-		n = triters.find_node (self.tree, lambda x: x.title == 'B')	
+		n = self.tree.find_node (lambda x: x.title == 'B')	
 		assert n.title == 'B', "should only find matched node not '%s'" % n 
-		n = triters.find_node (self.tree, lambda x: x.title == 'Z')	
+		n = self.tree.find_node (lambda x: x.title == 'Z')	
 		assert (n == None), "should find None not '%s'" % n
 	
 	def test_find_all_nodes (self):
-		ns = triters.find_all_nodes (self.tree, lambda x: x.title in ['B', 'C'])	
+		ns = self.tree.find_all_nodes (lambda x: x.title in ['B', 'C'])	
 		for n in ns:
 			assert (n.title in ['B', 'C']), \
 				"should only find matched nodes not '%s'" % n
-		ns = triters.find_all_nodes (self.tree, lambda x: x.title == 'Z')	
+		ns = self.tree.find_all_nodes (lambda x: x.title == 'Z')	
 		assert (ns == []), "should return empty list not '%s'" % ns
 	
 	def test_iter_nodes (self):
-		for n in triters.iter_find_nodes (self.tree, lambda x: x.title in ['B', 'C']):
+		for n in self.tree.iter_find_nodes (lambda x: x.title in ['B', 'C']):
 			assert (n.title in ['B', 'C']), \
 				"should only find matched nodes not '%s'" % n
-		for n in triters.iter_find_nodes (self.tree, lambda x: x.title == 'Z'):
+		for n in self.tree.iter_find_nodes (lambda x: x.title == 'Z'):
 			assert (False),  "should find no nodes not '%s'" % n
 
 	def test_iter_nodes_to_root (self):
-		start = triters.find_node (self.tree, lambda x: x.title == 'D')
-		n_path = [n for n in triters.iter_nodes_to_root (self.tree, start)]
+		start = self.tree.find_node (lambda x: x.title == 'D')
+		n_path = [n for n in self.tree.iter_nodes_to_root (start)]
 		n_titles = [x.title for x in n_path]
 		assert (n_titles == ['D', 'B', 'A']), \
 			"expected nodes D-B-A, actually got '%s'" % n_titles
