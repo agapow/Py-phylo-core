@@ -15,6 +15,7 @@ This script requires the following Python libraries:
 
 import argparse
 import sys
+import itertools
 
 from Bio import AlignIO
 
@@ -31,6 +32,18 @@ def progress_msg (s):
 
 
 def assign_snps (aln):
+	"""
+	Which columns of an alignment are heterogenous and what is there?
+	
+	Args:
+		aln: a BioPython multiple alignment
+		
+	Returns:
+		the sites with snps, and the variants and associated taxa names. This is rendered
+		as a dict with locations as the keys. The values are dicts themselves, with
+		allele states as the keys and a list of taxa names as the value.
+	
+	"""
 	# find out which cols are diverse, building a hash of locations vs chars
 	# not the most efficient way to do this, but it's a handy preliminary step
 	snp_cols = {}
@@ -41,7 +54,7 @@ def assign_snps (aln):
 		char_set.discard ('-')
 		if 1 < len (char_set):
 			snp_cols[i] = char_set
-	progress_msg ("%s SNPs found" % len (snp_cols))
+	progress_msg ("%s SNP sites found" % len (snp_cols))
 	
 	# now make a hash of every SNP and the corresponding taxa within
 	seq_cnt = len (aln)
@@ -67,68 +80,123 @@ def sort_snps (tree, snp_dict):
 	Args:
 		tree (Tree): a phylo.core phylogeny
 		snp_dict (dict): a dict of location - alleles, where alleles are a dict of a
-			value at that location and a list of the tip names with that value
-		
+			value at that location and a list of the tip names with that value. See
+			assign_snps for details.
+	
+	For brevity, we don't bother to report snps that exist solely on the tip. 
+	
 	""" 
-	# lists to sort records into
-	tips = []
-	mono = []
-	non_mono = []
+	# store results as [aln_col, residue, node]
+	results = []
 
-	# map node names to nodes
-	node_dict = {}
-	for t in tree.iter_tips():
-		node_dict[t.title] = t
-
-	# do the sorting
+	# map node names to nodes for convenience
+	names_to_nodes = {}
+	iterable = tree.iter_nodes()
+	for t in itertools.ifilter (lambda n: tree.is_node_tip (n), iterable):
+		names_to_nodes[t.title] = t
+		
+	# give the inner nodes names
+	nodes_to_names = {}
+	for n in tree.iter_nodes_postorder():
+		if (tree.is_node_tip (n)):
+			nodes_to_names[n] = n.title
+		else:
+			# for internal nodes, make a name from the first part of the first child's
+			# and last part of the last childs name
+			children = tree.node_children (n)
+			assert (2 <= len (children)), "detected a singleton node"
+			child_names = [nodes_to_names[m] for m in (children[0], children[-1])]
+			new_name = "%s/%s" % (
+				child_names[0].split('/')[0],
+				child_names[1].split('/')[-1],
+			)
+			nodes_to_names[n] = new_name
+			
+	# for every alignment column ...
 	for locn, var_dict in snp_dict.iteritems():
-		for res, taxa in var_dict.iteritems():
-			record = (locn, res, taxa)
-			if len (taxa) == 1:
-				tips.append (record)
-			else:
-				nodes = [node_dict[n] for n in taxa]
-				if tree.is_monophyletic (nodes):
-					print (record)
-					mono.append (record)
+		# XXX: would be easier if I produced an appropriate data structure in the
+		# previous step, but it works and I ain't gonna change it.
+		
+		# list of nodes and what is monophyletic where, fill with tip data
+		states_at_nodes = {}
+		for state, node_names in var_dict.iteritems():
+			for n in node_names:
+				node = names_to_nodes[n]
+				states_at_nodes[node] = state
+				
+		# now traverse tree and inherit state from below
+		for n in tree.iter_nodes_postorder():
+			if (not tree.is_node_tip (n)):
+				child_states = set ([states_at_nodes[c] for c in tree.node_children (n)])
+				if None in child_states:
+					states_at_nodes[n] = None
+				elif (1 < len (child_states)):
+					states_at_nodes[n] = None
 				else:
-					non_mono.append (record)
-					print (record)
-
-	# sort the recs, just for neatness
-	tips.sort()
-	mono.sort()
-	non_mono.sort()
-
+					states_at_nodes[n] = list (child_states)[0]
+					
+		# record results
+		for n, s in states_at_nodes.iteritems():
+			# only report internals
+			if (not tree.is_node_tip(n)):
+				results.append ([locn, s, nodes_to_names[n]])
+				
 	## Postconditions & return:
-	return tips, mono, non_mono
+	return results
 
-def text_report (tip_snps, mono_snps, non_mono_snps):
+def text_report (results):
 	def print_rec (x):
-		print ("- %s%s: %s" % x)
+		print ("- %s%s: %s" % tuple(x))
 
-	print ("Tips:")
-	for r in tip_snps:
+	print ("SNP monophyley at internal nodes found in %s cases:" % len(results))
+	for r in results:
 		print_rec (r)
-	print ("Mono:")
-	for r in mono_snps:
-		print_rec (r)
-	print ("Non-mono:")
-	for r in non_mono_snps:
-		print_rec (r)
+
 
 ### MAIN ###
 
 def parse_aln (hndl):
+	"""
+	Reads and parses an alignment.
+	
+	Args:
+		hndl: a handle opening for reading, containing a Fasta alignment
+		
+	Returns:
+		a BioPython multiple alignment object
+		
+	"""
 	return AlignIO.read (hndl, 'fasta')
 
 
 def parse_tree (hndl):
+	"""
+	Reads and parses a phylogeny.
+	
+	Args:
+		hndl: handle open for reading, containing a Newick-formatted tree
+		
+	Returns:
+		a phylo.core Tree
+	
+	"""
 	rdr = NewickReader ({'node_annotations': True})
 	return rdr.read (hndl)
 
 
 def parse_args (arg_list):
+	"""
+	Parse and check command-line arguments.
+	
+	Args:
+		arg_list (iterable): the commandline arguments
+		
+	Returns:
+		a structure of the parsed arguments
+		
+	This uses argparse and so can (and does) use positional arguments.	
+	
+	"""
 	parser = argparse.ArgumentParser (
 		description='Label subtrees of a phylogeny with characteristic SNPs')
 	parser.add_argument ('tree_hndl', metavar='TREE_FILE', type=argparse.FileType('r'),
@@ -140,15 +208,27 @@ def parse_args (arg_list):
 
 
 def main (options):
+	"""
+	Do the main work of script.
+	
+	Args:
+		options: an argparse structure with program options
+		
+	"""
+	# read in the data
 	aln = parse_aln (options.aln_hndl)
 	progress_msg ("The alignment has %s sequences" % len (aln))
 	tree = parse_tree (options.tree_hndl)
 	progress_msg ("The tree has %s nodes" % len (tree))
+	
+	# digest down to variant loci and snps therein
 	snp_map = assign_snps (aln)
 	var_cnt = sum ([len(k) for k in snp_map.values()])
 	progress_msg ("%s variants have been found" % var_cnt)
-	t_snps, m_snps, n_snps = sort_snps (tree, snp_map)
-	text_report (t_snps, m_snps, n_snps)
+	
+	# deduce which tip variants map to which internal nodes
+	results = sort_snps (tree, snp_map)
+	text_report (results)
 
 
 if __name__ == '__main__':

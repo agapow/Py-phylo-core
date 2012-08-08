@@ -224,7 +224,7 @@ class Tree (IterableTreeMixin):
 		"""
 		# NOTE: rootedness asserted in parent method
 		par = self.node_parent (node)
-		return [n for n in self.node_neighbours if n is not par]
+		return [n for n in self.node_neighbours(node) if n is not par]
 
 	def node_neighbours (self, node):
 		"""
@@ -240,8 +240,23 @@ class Tree (IterableTreeMixin):
 		"""
 		Is this a terminating (leaf) node?
 		"""
-		# NOTE: we allow for singleton root nodes
-		return (self.root != node) and (len (self.node_neighbours (node)) == 1)
+		# NOTE: we allow for singleton root nodes, which are tips
+		return (len (self.node_neighbours (node)) <= 1)
+		
+	def is_node_internal (self, node):
+		"""
+		Is this an internal node?
+		
+		We define this as a node with any descendants, which is pragmatically just the
+		opposite of a tip.
+		"""
+		return not self.is_node_tip (node)
+		
+	def is_node_root (self, node):
+		"""
+		Is this the root node?
+		"""
+		return (self.root == node)
 
 	def get_nodes (self, branch):
 		"""
