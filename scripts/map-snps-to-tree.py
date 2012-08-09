@@ -251,11 +251,12 @@ def test():
 	srs = [SeqRecord (Seq (x[1]), id=x[0], name=x[0]) for x in seqdata]
 	aln = MultipleSeqAlignment (srs)
 	
-	d = map_tip_names_to_nodes (t)
-	for k, v in d.iteritems():
-		print "Node name %s, node title %s" % (k, v.title)
+	#d = map_tip_names_to_nodes (t)
+	#for k, v in d.iteritems():
+	#	print "Node name %s, node title %s" % (k, v.title)
 		
 	d = generate_node_names (t)
+	print len(d)
 	for k, v in d.iteritems():
 		print "Node title %s, node title %s" % (k.title, v)
 	

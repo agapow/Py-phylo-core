@@ -43,7 +43,35 @@ class TestTreeTraversal (object):
 #		st = self.tree.subtree (subtree_nodes)
 #		st._validate()
 #		assert (len(st) == 7)
+
+
+class TestTreeRelationships (object):
+	def setup (self):
+		"""
+		Build a tree that starts from root, radiates to AB, CD. EF and then
+		A to F. 
+		"""
+		t = Tree()
+		nodes = {}
+		r = t.add_root ({'title': 'root'})
+		nodes['AB'], b = t.add_node (r, {'title': 'AB'}})
+		nodes['A'], b = t.add_node (nab, {'title': 'A'}})
+		nodes['B'], b = t.add_node (nab, {'title': 'B'}})
+		nodes['CD'], b = t.add_node (r, {'title': 'CD'}})
+		nodes['C'], b = t.add_node (ncd, {'title': 'C'}})
+		nodes['D'], b = t.add_node (ncd, {'title': 'D'}})
+		nodes['EF'], b = t.add_node (r, {'title': 'EF'}})
+		nodes['E'], b = t.add_node (nef, {'title': 'E'}})
+		nodes['F'], b = t.add_node (nef, {'title': 'F'}})
+		self.tree = t
+		self.nodes = nodes
+	
+	def teardown (self):
+		pass
 		
+	def test_neighbours (self):
+		
+				
 
 
 ### END ####################################################################
