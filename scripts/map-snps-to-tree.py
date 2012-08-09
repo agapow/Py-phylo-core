@@ -73,6 +73,35 @@ def assign_snps (aln):
 	return snp_distrib
 
 
+def map_tip_names_to_nodes (tree):
+	# map node names to nodes for convenience
+	names_to_nodes = {}
+	iterable = tree.iter_nodes()
+	for t in itertools.ifilter (lambda n: tree.is_node_tip (n), iterable):
+		names_to_nodes[t.title] = t
+	return names_to_nodes
+
+
+def generate_node_names (tree):
+	nodes_to_names = {}
+	for n in tree.iter_nodes_postorder():
+		if (tree.is_node_tip (n)):
+			nodes_to_names[n] = n.title
+		else:
+			# for internal nodes, make a name from the first part of the first child's
+			# and last part of the last childs name
+			children = tree.node_children (n)
+			assert (2 <= len (children)), "detected a singleton node"
+			child_names = [nodes_to_names[m] for m in (children[0], children[-1])]
+			new_name = "%s/%s" % (
+				child_names[0].split('/')[0],
+				child_names[1].split('/')[-1],
+			)
+			nodes_to_names[n] = new_name
+	return nodes_to_names
+
+
+
 def sort_snps (tree, snp_dict):
 	"""
 	Sorts the snps into tips, monophyletic and non-monophyletic.
@@ -90,27 +119,10 @@ def sort_snps (tree, snp_dict):
 	results = []
 
 	# map node names to nodes for convenience
-	names_to_nodes = {}
-	iterable = tree.iter_nodes()
-	for t in itertools.ifilter (lambda n: tree.is_node_tip (n), iterable):
-		names_to_nodes[t.title] = t
+	names_to_nodes = map_tip_names_to_nodes (tree)
 		
 	# give the inner nodes names
-	nodes_to_names = {}
-	for n in tree.iter_nodes_postorder():
-		if (tree.is_node_tip (n)):
-			nodes_to_names[n] = n.title
-		else:
-			# for internal nodes, make a name from the first part of the first child's
-			# and last part of the last childs name
-			children = tree.node_children (n)
-			assert (2 <= len (children)), "detected a singleton node"
-			child_names = [nodes_to_names[m] for m in (children[0], children[-1])]
-			new_name = "%s/%s" % (
-				child_names[0].split('/')[0],
-				child_names[1].split('/')[-1],
-			)
-			nodes_to_names[n] = new_name
+	nodes_to_names = generate_node_names (tree)
 			
 	# for every alignment column ...
 	for locn, var_dict in snp_dict.iteritems():
@@ -207,6 +219,47 @@ def parse_args (arg_list):
 	return args
 
 
+def test():
+	"""
+	Some code to walk the script through its paces.
+	"""
+	# make a tree
+	from phylo.core.tree import Tree
+	t = Tree()
+	r = t.add_root ({'title': 'root'})
+	nab, b = t.add_node (r, {'title': 'AB'})
+	na, b = t.add_node (nab, {'title': 'A'})
+	nb, b = t.add_node (nab, {'title': 'B'})
+	ncd, b = t.add_node (r, {'title': 'CD'})
+	nc, b = t.add_node (ncd, {'title': 'C'})
+	nd, b = t.add_node (ncd, {'title': 'D'})
+	nef, b = t.add_node (r, {'title': 'EF'})
+	ne, b = t.add_node (nef, {'title': 'E'})
+	nf, b = t.add_node (nef, {'title': 'F'})
+	
+	from Bio.SeqRecord import SeqRecord
+	from Bio.Seq import Seq
+	from Bio.Align import MultipleSeqAlignment
+	seqdata = [
+		['A', 'ACGT'],
+		['B', 'ACGT'],
+		['C', 'ACGT'],
+		['D', 'ACGT'],
+		['E', 'ACGT'],
+		['F', 'ACGT'],
+	]
+	srs = [SeqRecord (Seq (x[1]), id=x[0], name=x[0]) for x in seqdata]
+	aln = MultipleSeqAlignment (srs)
+	
+	d = map_tip_names_to_nodes (t)
+	for k, v in d.iteritems():
+		print "Node name %s, node title %s" % (k, v.title)
+		
+	d = generate_node_names (t)
+	for k, v in d.iteritems():
+		print "Node title %s, node title %s" % (k.title, v)
+	
+	
 def main (options):
 	"""
 	Do the main work of script.
@@ -215,9 +268,13 @@ def main (options):
 		options: an argparse structure with program options
 		
 	"""
+	test()
+	return
+	
 	# read in the data
 	aln = parse_aln (options.aln_hndl)
 	progress_msg ("The alignment has %s sequences" % len (aln))
+	print aln.__class__
 	tree = parse_tree (options.tree_hndl)
 	progress_msg ("The tree has %s nodes" % len (tree))
 	
