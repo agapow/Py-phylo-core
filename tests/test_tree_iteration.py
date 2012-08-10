@@ -62,4 +62,48 @@ class TestIterationFind (object):
 		pass
 
 
+class TestTreeIteration (object):
+	def setup (self):
+		"""
+		Build a tree that starts from root, radiates to ABC and DE and thence to AB (and
+		A & B) and D and E.
+		
+		Our tree is:
+		
+		- root
+			- ABC
+				- AB
+					- A
+					- B
+				- C
+			- DE
+				- D
+				- E
+		
+		"""
+		t = Tree()
+		r = t.add_root ({'title': 'root'})
+		node_abc, b = t.add_node (r, {'title': 'ABC'})
+		node_de, b = t.add_node (r, {'title': 'DE'})
+		node_ab, b = t.add_node (node_abc, {'title': 'AB'})
+		node_c, b = t.add_node (node_abc, {'title': 'C'})
+		node_a, b = t.add_node (node_ab, {'title': 'A'})
+		node_b, b = t.add_node (node_ab, {'title': 'B'})
+		node_d, b = t.add_node (node_de, {'title': 'D'})
+		node_e, b = t.add_node (node_de, {'title': 'E'})
+		
+		# record for use in test functions
+		self.tree = t
+		self.nodes = {}
+		for n in [r, node_a, node_b, node_c, node_d, node_e, node_ab, node_abc, node_de]:
+			self.nodes[n.title] = n
+		
+	def teardown (self):
+		pass
+		
+	def test_postorder (self):
+		path = ['A', 'B', 'AB', 'C', 'ABC', 'D', 'E', 'DE', 'root']
+		actual_path = [n.title for n in self.tree.iter_nodes_postorder()]
+		assert (path == actual_path)
+			
 

@@ -18,7 +18,7 @@ __all__ = [
 from exceptions import NotImplementedError
 from copy import deepcopy
 
-from phylo.core.impl.odict import Odict
+from phylo.core.impl.odict import Odict, OrderedDict
 from node import Node
 from branch import Branch
 from iterable_tree_mixin import IterableTreeMixin
@@ -210,11 +210,14 @@ class Tree (IterableTreeMixin):
 		assert (self.is_rooted()), "this method requires a rooted tree"
 		
 		## Main:
-		neighbours = self._nodes[node].keys()
-		if len (neighbours):
-			return neighbours[0]
-		else:
+		if (node == self.root):
 			return None
+		else:
+			neighbours = self._nodes[node].keys()
+			if len (neighbours):
+				return neighbours[0]
+			else:
+				return None
 		
 	def node_children (self, node):
 		"""
@@ -405,7 +408,7 @@ class Tree (IterableTreeMixin):
 			new_node = Node()
 		else:
 			new_node = Node (props)
-		self._nodes[new_node] = Odict()
+		self._nodes[new_node] = OrderedDict()
 		return new_node
 
 	def _create_branch (self, distance=None, props=None):
@@ -449,7 +452,7 @@ class Tree (IterableTreeMixin):
 		"""
 		# TODO: can we keep track of nodes in only 1 way, rather than both ways
 		self._branches[branch] = (node_1, node_2)
-		self._nodes[node_2][node_1] = self._nodes[node_1][node_2] = branch
+		self._nodes[node_1][node_2] = self._nodes[node_2][node_1] = branch
 
 	def _unlink_nodes (self, node_1, node_2):
 		"""

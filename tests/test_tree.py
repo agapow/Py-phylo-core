@@ -15,6 +15,10 @@ from phylo.core.tree import Tree
 
 ### TESTS ###
 
+def are_lists_equal (l1, l2):
+	return (sorted(l1) == sorted(l2))
+	
+
 class TestTreeTraversal (object):
 	def setup (self):
 		"""
@@ -50,27 +54,94 @@ class TestTreeRelationships (object):
 		"""
 		Build a tree that starts from root, radiates to AB, CD. EF and then
 		A to F. 
+		
+		Our tree is:
+		
+		- root
+			- ABC
+				- AB
+					- A
+					- B
+				- C
+			- DE
+				- D
+				- E
+		
 		"""
 		t = Tree()
-		nodes = {}
 		r = t.add_root ({'title': 'root'})
-		nodes['AB'], b = t.add_node (r, {'title': 'AB'}})
-		nodes['A'], b = t.add_node (nab, {'title': 'A'}})
-		nodes['B'], b = t.add_node (nab, {'title': 'B'}})
-		nodes['CD'], b = t.add_node (r, {'title': 'CD'}})
-		nodes['C'], b = t.add_node (ncd, {'title': 'C'}})
-		nodes['D'], b = t.add_node (ncd, {'title': 'D'}})
-		nodes['EF'], b = t.add_node (r, {'title': 'EF'}})
-		nodes['E'], b = t.add_node (nef, {'title': 'E'}})
-		nodes['F'], b = t.add_node (nef, {'title': 'F'}})
+		node_abc, b = t.add_node (r, {'title': 'ABC'})
+		node_de, b = t.add_node (r, {'title': 'DE'})
+		node_ab, b = t.add_node (node_abc, {'title': 'AB'})
+		node_c, b = t.add_node (node_abc, {'title': 'C'})
+		node_a, b = t.add_node (node_ab, {'title': 'A'})
+		node_b, b = t.add_node (node_ab, {'title': 'B'})
+		node_d, b = t.add_node (node_de, {'title': 'D'})
+		node_e, b = t.add_node (node_de, {'title': 'E'})
+		
+		# record for use in test functions
 		self.tree = t
-		self.nodes = nodes
-	
+		self.nodes = {}
+		for n in [r, node_a, node_b, node_c, node_d, node_e, node_ab, node_abc, node_de]:
+			self.nodes[n.title] = n
+		
 	def teardown (self):
 		pass
 		
 	def test_neighbours (self):
+		neighbours = [
+			['ABC', ['root', 'AB', 'C']],
+			['AB', ['ABC', 'A', 'B']],
+			['A', ['AB']],
+			['B', ['AB']],
+			['DE', ['root', 'D', 'E']],
+			['D', ['DE']],
+			['E', ['DE']],
+			['root', ['ABC', 'DE']],
+		]
+		for r in neighbours:
+			n = self.nodes[r[0]]
+			names = [ne.title for ne in self.tree.node_neighbours (n)]
+			print names, r[1]
+			assert are_lists_equal (names, r[1]), "'%s' is not '%s'" % (names, r[1])
+
 		
+	def test_children (self):
+		children = [
+			['ABC', ['AB', 'C']],
+			['AB', ['A', 'B']],
+			['A', []],
+			['B', []],
+			['DE', ['D', 'E']],
+			['D', []],
+			['E', []],
+			['root', ['ABC', 'DE']],
+		]
+		for r in children:
+			print "Testing %s ..." % r
+			n = self.nodes[r[0]]
+			print "Node is %s ..." % n
+			names = [ne.title for ne in self.tree.node_children (n)]
+			assert are_lists_equal (names, r[1]), "'%s' is not '%s'" % (names, r[1])
+			
+	def test_parents (self):
+		parents = [
+			['ABC', 'root'],
+			['AB', 'ABC'],
+			['A', 'AB'],
+			['B', 'AB'],
+			['DE', 'root'],
+			['D', 'DE'],
+			['E', 'DE'],
+			['root', None],
+		]
+		for r in parents:
+			n = self.nodes[r[0]]
+			node = self.tree.node_parent (n)
+			if node:
+				node = node.title
+			assert (node == r[1]), "'%s' is not '%s'" % (node, r[1])		
+				
 				
 
 

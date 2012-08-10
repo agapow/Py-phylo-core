@@ -23,10 +23,10 @@ __all__ = [
 import exceptions
 
 try:
-	from collections import OrderedDict as Odict
+	from collections import OrderedDict
 
 except exceptions.ImportError:
-	from _odict import OrderedDict as Odict
+	from _odict import OrderedDict
 
 from collections import deque
 

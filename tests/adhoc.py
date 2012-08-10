@@ -10,9 +10,8 @@ e, br = t.add_node (b, {'title': 'E'})
 f, br = t.add_node (c, {'title': 'F'})
 g, br = t.add_node (c, {'title': 'G'})
 
- 
-start = t.find_node (lambda x: x.title == 'D')
-n_path = [n for n in t.iter_nodes_to_root (start)]
-n_titles = [x.title for x in n_path]
-assert (n_titles == ['D', 'B', 'A']), "expected nodes D-B-A, actually got '%s'" % n_titles
+for n in t.nodes:
+	print n
+	print t.node_children (n)
+	print 
 
