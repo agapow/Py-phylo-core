@@ -49,7 +49,7 @@ class TestTreeTraversal (object):
 #		assert (len(st) == 7)
 
 
-class TestTreeRelationships (object):
+class TestNodeAccessors (object):
 	def setup (self):
 		"""
 		Build a tree that starts from root, radiates to AB, CD. EF and then
@@ -84,6 +84,9 @@ class TestTreeRelationships (object):
 		self.nodes = {}
 		for n in [r, node_a, node_b, node_c, node_d, node_e, node_ab, node_abc, node_de]:
 			self.nodes[n.title] = n
+			
+		self.solo_tree = Tree()
+		self.solo_tree.add_root()
 		
 	def teardown (self):
 		pass
@@ -104,6 +107,10 @@ class TestTreeRelationships (object):
 			names = [ne.title for ne in self.tree.node_neighbours (n)]
 			print names, r[1]
 			assert are_lists_equal (names, r[1]), "'%s' is not '%s'" % (names, r[1])
+			
+		# test the odd case of a tree with a single node
+		solo_node = self.solo_tree.nodes[0]
+		assert (self.solo_tree.node_neighbours(solo_node) == [])
 
 		
 	def test_children (self):
@@ -124,6 +131,10 @@ class TestTreeRelationships (object):
 			names = [ne.title for ne in self.tree.node_children (n)]
 			assert are_lists_equal (names, r[1]), "'%s' is not '%s'" % (names, r[1])
 			
+		# test the odd case of a tree with a single node
+		solo_node = self.solo_tree.nodes[0]
+		assert (self.solo_tree.node_children(solo_node) == [])
+					
 	def test_parents (self):
 		parents = [
 			['ABC', 'root'],
@@ -140,8 +151,66 @@ class TestTreeRelationships (object):
 			node = self.tree.node_parent (n)
 			if node:
 				node = node.title
-			assert (node == r[1]), "'%s' is not '%s'" % (node, r[1])		
-				
+			assert (node == r[1]), "'%s' is not '%s'" % (node, r[1])
+					
+		# test the odd case of a tree with a single node
+		solo_node = self.solo_tree.nodes[0]
+		assert (self.solo_tree.node_parent(solo_node) == None)
+		
+	def test_is_tip (self):
+		nodes = [
+			['ABC', False],
+			['AB', False],
+			['A', True],
+			['B', True],
+			['DE', False],
+			['D', True],
+			['E', True],
+			['root', False],
+		]
+		for r in nodes:
+			assert (self.tree.is_node_tip (self.nodes[r[0]]) == r[1])
+			
+		# test the odd case of a tree with a single node
+		solo_node = self.solo_tree.nodes[0]
+		assert (self.solo_tree.is_node_tip(solo_node))
+					
+	def test_is_internal (self):
+		nodes = [
+			['ABC', True],
+			['AB', True],
+			['A', False],
+			['B', False],
+			['DE', True],
+			['D', False],
+			['E', False],
+			['root', True],
+		]
+		for r in nodes:
+			assert (self.tree.is_node_internal (self.nodes[r[0]]) == r[1])
+			
+		# test the odd case of a tree with a single node
+		solo_node = self.solo_tree.nodes[0]
+		assert (self.solo_tree.is_node_internal(solo_node) == False)
+		
+	def test_is_root (self):
+		nodes = [
+			['ABC', False],
+			['AB', False],
+			['A', False],
+			['B', False],
+			['DE', False],
+			['D', False],
+			['E', False],
+			['root', True],
+		]
+		for r in nodes:
+			assert (self.tree.is_node_root (self.nodes[r[0]]) == r[1])			
+			
+		# test the odd case of a tree with a single node
+		solo_node = self.solo_tree.nodes[0]
+		assert (self.solo_tree.is_node_root(solo_node))
+							
 				
 
 

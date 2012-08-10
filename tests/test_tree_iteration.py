@@ -106,4 +106,7 @@ class TestTreeIteration (object):
 		actual_path = [n.title for n in self.tree.iter_nodes_postorder()]
 		assert (path == actual_path)
 			
-
+	def test_preorder (self):
+		path = ['root', 'ABC', 'AB', 'A', 'B', 'C', 'DE', 'D', 'E']
+		actual_path = [n.title for n in self.tree.iter_nodes_preorder()]
+		assert (path == actual_path)
