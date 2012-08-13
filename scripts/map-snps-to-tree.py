@@ -102,19 +102,23 @@ def generate_node_names (tree):
 
 
 
-def sort_snps (tree, snp_dict):
+def sort_snps (tree, snp_dict, ignore_majority=False):
 	"""
-	Sorts the snps into tips, monophyletic and non-monophyletic.
+	Maps the snps onto the tree, highlighting the interesting ones.
 	
 	Args:
 		tree (Tree): a phylo.core phylogeny
 		snp_dict (dict): a dict of location - alleles, where alleles are a dict of a
 			value at that location and a list of the tip names with that value. See
 			assign_snps for details.
+		ignore_majority (bool): don't report the most prevalent SNP in a column. This
+			is useful since the most prevalent is usually the ancestral and hence
+			uninteresting.
 	
-	For brevity, we don't bother to report snps that exist solely on the tip. 
+	For brevity, we don't bother to report snps that exist solely on tips.
 	
 	""" 
+	# TODO: need a tip reporting function?
 	# store results as [aln_col, residue, node]
 	results = []
 
@@ -129,12 +133,28 @@ def sort_snps (tree, snp_dict):
 		# XXX: would be easier if I produced an appropriate data structure in the
 		# previous step, but it works and I ain't gonna change it.
 		
+		# if we're ignoring the majority, set the majority state to None
+		if ignore_majority:
+			# find the majority state
+			max_state = None
+			max_freq = 0
+			for state, node_names in var_dict.iteritems():
+				if (max_freq < len(node_names)):
+					max_freq = len(node_names)
+					max_state = state
+			# now set it to None
+			max_names = var_dict[max_state]
+			del var_dict[max_state]
+			var_dict[None] = max_names
+		
+		
 		# list of nodes and what is monophyletic where, fill with tip data
 		states_at_nodes = {}
 		for state, node_names in var_dict.iteritems():
 			for n in node_names:
 				node = names_to_nodes[n]
 				states_at_nodes[node] = state
+
 				
 		# now traverse tree and inherit state from below
 		for n in tree.iter_nodes_postorder():
@@ -146,11 +166,13 @@ def sort_snps (tree, snp_dict):
 					states_at_nodes[n] = None
 				else:
 					states_at_nodes[n] = list (child_states)[0]
+					for c in tree.node_children (n):
+						states_at_nodes[c] = None
 					
 		# record results
 		for n, s in states_at_nodes.iteritems():
 			# only report internals
-			if (not tree.is_node_tip(n)):
+			if (tree.is_node_internal (n) and s):
 				results.append ([locn, s, nodes_to_names[n]])
 				
 	## Postconditions & return:
@@ -161,7 +183,7 @@ def text_report (results):
 		print ("- %s%s: %s" % tuple(x))
 
 	print ("SNP monophyley at internal nodes found in %s cases:" % len(results))
-	for r in results:
+	for r in sorted (results, cmp=lambda a, b: cmp (int(a[0]), int(b[0]))):
 		print_rec (r)
 
 
@@ -210,7 +232,21 @@ def parse_args (arg_list):
 	
 	"""
 	parser = argparse.ArgumentParser (
-		description='Label subtrees of a phylogeny with characteristic SNPs')
+		description='Map characteristic SNPs to a subtree within a phylogeny',
+		epilog='''Taking an alignment and a phylogeny of that alignment, this script
+			locates the origin of those SNPs within the phylogeny as the most recent
+			common ancestor of the different SNP states. (Of course, this is only a
+			parsimonious and perhaps simplistic location - more accurate mapping could
+			be done with ancestral state reconstruction.) 
+			A literal interpretation of this algorithm would lead to a lot of output
+			with little meaning, so the information is reduced in two ways:
+			1. SNPs that map only to tips are not reported.
+			2. The -i option will ignore the most common state in a column, which will
+			   often be the ancestral state at the root.
+			'''
+	)
+	parser.add_argument ('-i', '--ignore-majority', action='store_true',
+		help='ignore the most common allele in a column')
 	parser.add_argument ('tree_hndl', metavar='TREE_FILE', type=argparse.FileType('r'),
 		help='a file containing a phylogeny in Newick format')
 	parser.add_argument ('aln_hndl', metavar='ALN_FILE', type=argparse.FileType('r'),
@@ -227,13 +263,14 @@ def test():
 	from phylo.core.tree import Tree
 	t = Tree()
 	r = t.add_root ({'title': 'root'})
-	nab, b = t.add_node (r, {'title': 'AB'})
+	nabcd, b = t.add_node (r, {'title': 'ABCD'})
+	nef, b = t.add_node (r, {'title': 'EF'})
+	nab, b = t.add_node (nabcd, {'title': 'AB'})
+	ncd, b = t.add_node (nabcd, {'title': 'CD'})
 	na, b = t.add_node (nab, {'title': 'A'})
 	nb, b = t.add_node (nab, {'title': 'B'})
-	ncd, b = t.add_node (r, {'title': 'CD'})
 	nc, b = t.add_node (ncd, {'title': 'C'})
 	nd, b = t.add_node (ncd, {'title': 'D'})
-	nef, b = t.add_node (r, {'title': 'EF'})
 	ne, b = t.add_node (nef, {'title': 'E'})
 	nf, b = t.add_node (nef, {'title': 'F'})
 	
@@ -241,8 +278,8 @@ def test():
 	from Bio.Seq import Seq
 	from Bio.Align import MultipleSeqAlignment
 	seqdata = [
-		['A', 'ACGT'],
-		['B', 'ACGT'],
+		['A', 'XYGT'],
+		['B', 'AYGT'],
 		['C', 'ACGT'],
 		['D', 'ACGT'],
 		['E', 'ACGT'],
@@ -251,14 +288,7 @@ def test():
 	srs = [SeqRecord (Seq (x[1]), id=x[0], name=x[0]) for x in seqdata]
 	aln = MultipleSeqAlignment (srs)
 	
-	#d = map_tip_names_to_nodes (t)
-	#for k, v in d.iteritems():
-	#	print "Node name %s, node title %s" % (k, v.title)
-		
-	d = generate_node_names (t)
-	print len(d)
-	for k, v in d.iteritems():
-		print "Node title %s, node title %s" % (k.title, v)
+	return t, aln
 	
 	
 def main (options):
@@ -269,13 +299,13 @@ def main (options):
 		options: an argparse structure with program options
 		
 	"""
-	test()
-	return
-	
+	progress_msg ("Reading tree from: %s" % options.tree_hndl)
+	progress_msg ("Reading alignment from: %s" % options.aln_hndl)
+	progress_msg ("Ignoring the majority allele in column: %s" % options.ignore_majority)
+			
 	# read in the data
 	aln = parse_aln (options.aln_hndl)
 	progress_msg ("The alignment has %s sequences" % len (aln))
-	print aln.__class__
 	tree = parse_tree (options.tree_hndl)
 	progress_msg ("The tree has %s nodes" % len (tree))
 	
@@ -285,7 +315,7 @@ def main (options):
 	progress_msg ("%s variants have been found" % var_cnt)
 	
 	# deduce which tip variants map to which internal nodes
-	results = sort_snps (tree, snp_map)
+	results = sort_snps (tree, snp_map, ignore_majority=options.ignore_majority)
 	text_report (results)
 
 

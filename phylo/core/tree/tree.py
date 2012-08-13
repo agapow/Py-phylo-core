@@ -231,11 +231,11 @@ class Tree (IterableTreeMixin):
 
 	def node_neighbours (self, node):
 		"""
-		How many nodes are directly adjacent to this one?
+		What nodes are directly adjacent to this one?
 
-		In graph theory terms, this gives the *order* of the node.
+		In graph theory terms, the number of these gives the *order* of the node.
 		"""
-		return self._nodes[node]
+		return self._nodes[node].keys()
 		
 	node_neighbors = node_neighbours
 
@@ -314,6 +314,7 @@ class Tree (IterableTreeMixin):
 		else:
 			assert (parent is not None), \
 				"Subsequent nodes must be connected to the rest of the tree"
+			assert (parent in self.nodes), "parent '%s' is not member of tree" % parent
 			new_node = self._create_node (node_props)
 			new_branch = self._create_branch (distance, branch_props)
 			self._link_nodes (parent, new_branch, new_node)

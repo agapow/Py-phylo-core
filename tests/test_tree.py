@@ -105,11 +105,11 @@ class TestNodeAccessors (object):
 		for r in neighbours:
 			n = self.nodes[r[0]]
 			names = [ne.title for ne in self.tree.node_neighbours (n)]
-			print names, r[1]
 			assert are_lists_equal (names, r[1]), "'%s' is not '%s'" % (names, r[1])
 			
 		# test the odd case of a tree with a single node
 		solo_node = self.solo_tree.nodes[0]
+		print self.solo_tree.node_neighbours(solo_node)
 		assert (self.solo_tree.node_neighbours(solo_node) == [])
 
 		
