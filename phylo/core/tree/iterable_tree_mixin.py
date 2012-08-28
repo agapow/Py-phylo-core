@@ -111,7 +111,8 @@ class IterableTreeMixin (object):
 	
 	
 	def iter_tip_nodes (self):
-		return self.iter_nodes_if (lambda t, n: (t.count_adjacent_nodes (n) == 1))
+		return self.iter_find_nodes (lambda n: self.is_node_tip (n))
+		#return self.iter_nodes_if (lambda t, n: (t.count_adjacent_nodes (n) == 1))
 	
 	
 	### ORDER-BASED
