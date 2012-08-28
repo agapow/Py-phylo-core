@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.1'
+from phylo.core import __version__
 
 setup(name='py-phylo-core',
-      version=version,
+      version=__version__,
       description="Classes for representing a phylogenetic tree",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),

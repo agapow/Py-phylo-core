@@ -7,7 +7,7 @@ Representing & manipulating phylogenetic trees.
 
 __docformat__ = 'restructuredtext en'
 __author__ = "P-M Agapow <pma@agapow.net>"
-__version__ = "0.3"
+__version__ = "0.4"
 
 
 ### IMPORTS ###
